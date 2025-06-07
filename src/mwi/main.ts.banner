@@ -1,0 +1,10 @@
+// ==UserScript==
+// @name            MWI Helper
+// @version         1.0.0
+// @description     MilkyWayIdle Helper
+// @license         ISC
+// @run-at          document-start
+// @match           https://www.milkywayidle.com/*
+// @match           https://test.milkywayidle.com/*
+// @grant           unsafeWindow
+// ==/UserScript==
