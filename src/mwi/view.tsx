@@ -24,6 +24,7 @@ export function AddView(child: React.ReactNode) {
 }
 
 function App() {
+    const [show, setShow] = useState(true);
     const [editMode, setEditMode] = useState(false);
     const [children, setChildren] = useState<React.ReactNode>(childrenBefore);
     const position = useRef(loadSettings("view.position", {
@@ -39,6 +40,23 @@ function App() {
             addView = undefined;
         }
     }, [])
+
+    if (!show) {
+        // Add a button to the top left corner
+        return <button
+            style={{
+                position: "absolute",
+                left: 0,
+                top: 0,
+                zIndex: 1000000,
+                margin: "10px",
+            }}
+            onClick={() => {
+                setShow(true);
+            }}>
+            MWI Helper
+        </button>
+    }
 
     return <Rnd
         default={position.current}
@@ -70,12 +88,19 @@ function App() {
             background: "gray",
         }}>
             <div>Milky Way Idle Helper</div>
-            <button onClick={() => {
-                setEditMode(!editMode);
-                if (editMode) {
-                    saveSettings("view.position", position.current);
-                }
-            }}>{editMode ? "Save" : "Move"}</button>
+            <div>
+                <button onClick={() => {
+                    setEditMode(!editMode);
+                    if (editMode) {
+                        saveSettings("view.position", position.current);
+                    }
+                }}>{editMode ? "Save" : "Move"}
+                </button>
+                <button onClick={() => {
+                    setShow(false);
+                }}>-
+                </button>
+            </div>
         </div>
         <div
             style={{
