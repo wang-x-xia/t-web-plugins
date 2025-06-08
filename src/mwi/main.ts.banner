@@ -2,6 +2,8 @@
 // @name            MWI Helper
 // @version         1.0.0
 // @description     MilkyWayIdle Helper
+// @author          wang-x-xia
+// @homepage        https://github.com/wang-x-xia/t-web-plugins
 // @license         ISC
 // @run-at          document-start
 // @match           https://www.milkywayidle.com/*
@@ -9,4 +11,6 @@
 // @grant           unsafeWindow
 // @grant           GM_getValue
 // @grant           GM_setValue
+// @downloadURL     https://wang-x-xia.github.io/t-web-plugins/mwi.js
+// @updateURL       https://wang-x-xia.github.io/t-web-plugins/mwi.js
 // ==/UserScript==
