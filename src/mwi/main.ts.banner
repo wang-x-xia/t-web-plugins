@@ -7,4 +7,6 @@
 // @match           https://www.milkywayidle.com/*
 // @match           https://test.milkywayidle.com/*
 // @grant           unsafeWindow
+// @grant           GM_getValue
+// @grant           GM_setValue
 // ==/UserScript==

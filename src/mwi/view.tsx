@@ -1,7 +1,8 @@
 import * as React from "react";
-import {useEffect, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import {createRoot} from "react-dom/client";
 import {Rnd} from "react-rnd";
+import {loadSettings, saveSettings} from "./settings";
 
 export function setupApp() {
     const container = document.createElement("div")
@@ -25,6 +26,12 @@ export function AddView(child: React.ReactNode) {
 function App() {
     const [editMode, setEditMode] = useState(false);
     const [children, setChildren] = useState<React.ReactNode>(childrenBefore);
+    const position = useRef(loadSettings("view.position", {
+        x: 0,
+        y: 0,
+        width: "400px",
+        height: "400px",
+    }))
 
     useEffect(() => {
         addView = setChildren;
@@ -34,19 +41,26 @@ function App() {
     }, [])
 
     return <Rnd
-        default={{
-            x: 0,
-            y: 0,
-            width: 300,
-            height: 300,
-        }}
+        default={position.current}
         bounds="window"
         style={{
             zIndex: 1000000,
             padding: "2px",
+            fontSize: "14px",
+            overflow: "auto",
+            background: "white",
         }}
         disableDragging={!editMode}
-        enableResizing={editMode}>
+        enableResizing={editMode}
+        onResizeStop={(_event, _direction, ref) => {
+            position.current.width = ref.style.width;
+            position.current.height = ref.style.height;
+        }}
+        onDragStop={(_, data) => {
+            position.current.x = data.x;
+            position.current.y = data.y;
+        }}
+    >
         <div style={{
             display: "flex",
             flexDirection: "row",
@@ -58,6 +72,9 @@ function App() {
             <div>Milky Way Idle Helper</div>
             <button onClick={() => {
                 setEditMode(!editMode);
+                if (editMode) {
+                    saveSettings("view.position", position.current);
+                }
             }}>{editMode ? "Save" : "Move"}</button>
         </div>
         <div
