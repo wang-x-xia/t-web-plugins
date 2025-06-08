@@ -1,0 +1,19 @@
+name: Build and Publish
+on:
+  push:
+    branches:
+      - main
+jobs:
+  Build-Tampermonkey-Scripts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3.9.1
+        with:
+          node-version: 18
+      - run: npm install
+      - run: npm run mwi
+      - uses: actions/upload-pages-artifact@v3.0.1
+        with:
+          name: github-pages
+          path: dist
