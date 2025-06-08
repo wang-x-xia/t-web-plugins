@@ -24,12 +24,18 @@ export interface InitCharacterData {
     characterItems: CharacterItem[]
     consumableCombatTriggersMap: Record<string, Trigger[]>
     abilityCombatTriggersMap: Record<string, Trigger[]>
-    actionTypeFoodSlotsMap: Record<string, (CharacterFoodSlot | null)[]>
+    actionTypeFoodSlotsMap: Record<string, (CharacterFoodDrinkSlot | null)[]>
     characterLoadoutMap: Record<string, CharacterLoadout>
     combatUnit: CombatUnit
     noncombatStats: NoncombatStats
     characterHouseRoomMap: Record<string, CharacterHouseRoom>
     chatHistoryByChannelMap: Record<string, any[]>
+    actionTypeDrinkSlotsMap: Record<string, (CharacterFoodDrinkSlot | null)[]>
+    mooPassActionTypeBuffsMap: Record<string, Buff[]>
+    communityActionTypeBuffsMap: Record<string, Buff[]>
+    houseActionTypeBuffsMap: Record<string, Buff[]>
+    consumableActionTypeBuffsMap: Record<string, Buff[]>
+    equipmentActionTypeBuffsMap: Record<string, Buff[]>
 }
 
 export interface Character extends HasId, HasTime {
@@ -116,7 +122,7 @@ export interface Trigger {
     value: number
 }
 
-export interface CharacterFoodSlot extends OwnedByCharacter {
+export interface CharacterFoodDrinkSlot extends OwnedByCharacter {
     actionTypeHrid: string
     consumableSlotTypeHrid: string
     slotIndex: number
@@ -167,4 +173,13 @@ export interface NoncombatStats {
 export interface CharacterHouseRoom extends HasTime, OwnedByCharacter {
     houseRoomHrid: string
     level: number
+}
+
+export interface Buff {
+    uniqueHrid: string
+    typeHrid: string
+    ratioBoost: number
+    ratioBoostLevelBonus: number
+    flatBoost: number
+    flatBoostLevelBonus: number
 }

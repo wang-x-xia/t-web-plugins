@@ -43,6 +43,7 @@ function App() {
         bounds="window"
         style={{
             zIndex: 1000000,
+            padding: "2px",
         }}
         disableDragging={!editMode}
         enableResizing={editMode}>

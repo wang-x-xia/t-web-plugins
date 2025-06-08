@@ -1,5 +1,7 @@
+import type {CharacterSkill, InitCharacterData} from "./api-type";
+import type {EngineBuff, EngineCharacter} from "./engine-type";
+import {Action, getActionByHrid, getBuffSourceByHrid, getBuffTypeByHrid, getSkillHrid} from "./hrid";
 import {LifecycleEvent, triggerLifecycleEvent} from "./lifecycle";
-import type {CharacterSkill, InitCharacterData} from "./type";
 
 export function setupEngineHook() {
     unsafeWindow.WebSocket = new Proxy(WebSocket, {
@@ -17,10 +19,6 @@ export function setupEngineHook() {
 
 let character: EngineCharacter;
 
-interface EngineCharacter {
-    skills: Record<string, CharacterSkill>;
-}
-
 export function currentCharacter(): EngineCharacter {
     if (!character) {
         throw new Error("Character not initialized");
@@ -30,12 +28,36 @@ export function currentCharacter(): EngineCharacter {
 
 
 function initCharacterData(data: InitCharacterData) {
+    const buffs: EngineBuff[] = [data.mooPassActionTypeBuffsMap, data.communityActionTypeBuffsMap, data.houseActionTypeBuffsMap, data.consumableActionTypeBuffsMap, data.equipmentActionTypeBuffsMap]
+        .flatMap((buffMap) => Object.entries(buffMap).flatMap(([key, value]) => (value || []).map<EngineBuff | null>((buff) => {
+            const action = getActionByHrid(key);
+            const type = getBuffTypeByHrid(buff.typeHrid);
+            const source = getBuffSourceByHrid(buff.uniqueHrid);
+            if (!action || !type || !source) {
+                console.log({"log-event": "invalid-buff", "action": key, "buff": buff});
+                return null;
+            }
+            return {
+                action,
+                type,
+                source,
+                ratioBoost: buff.ratioBoost,
+                flatBoost: buff.flatBoost,
+                ratioBoostLevelBonus: buff.ratioBoostLevelBonus,
+                flatBoostLevelBonus: buff.flatBoostLevelBonus,
+            }
+        })))
+        .filter(it => it != null);
     character = {
-        skills: data.characterSkills.reduce((acc, skill) => {
-            acc[skill.skillHrid] = skill;
-            return acc;
-        }, {} as Record<string, CharacterSkill>)
+        skills: Object.values(Action).reduce((acc, key) => ({
+            ...acc,
+            [key]: data.characterSkills.find((skill) => skill.skillHrid === getSkillHrid(key)) || null,
+        }), {} as Record<Action, CharacterSkill | null>),
+        drinkSlots: data.actionTypeDrinkSlotsMap,
+        noncombatStats: data.noncombatStats,
+        buffs,
     }
+    console.log({"log-event": "character-initialized", "character": character});
     triggerLifecycleEvent(LifecycleEvent.CharacterLoaded);
 }
 
