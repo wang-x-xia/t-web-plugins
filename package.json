@@ -4,7 +4,8 @@
   "description": "Tampermonkey Scripts",
   "type": "module",
   "scripts": {
-    "mwi": "rollup -c"
+    "mwi": "rollup -c --environment NODE_ENV:production",
+    "mwi-dev": "rollup -c --environment NODE_ENV:development"
   },
   "repository": {
     "type": "git",
