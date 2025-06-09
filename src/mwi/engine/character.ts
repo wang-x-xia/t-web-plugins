@@ -1,21 +1,8 @@
-import type {CharacterSkill, InitCharacterData} from "./api-type";
+import type {CharacterSkill} from "../api/character-type";
+import type {InitCharacterData} from "../api/message-type";
+import {Action, getActionByHrid, getBuffSourceByHrid, getBuffTypeByHrid, getSkillHrid} from "../hrid";
+import {LifecycleEvent, triggerLifecycleEvent} from "../lifecycle";
 import type {EngineBuff, EngineCharacter} from "./engine-type";
-import {Action, getActionByHrid, getBuffSourceByHrid, getBuffTypeByHrid, getSkillHrid} from "./hrid";
-import {LifecycleEvent, triggerLifecycleEvent} from "./lifecycle";
-
-export function setupEngineHook() {
-    unsafeWindow.WebSocket = new Proxy(WebSocket, {
-        construct(target, args: ConstructorParameters<typeof WebSocket>) {
-            console.log({"log-event": "ws-created", "args": args});
-            const ws = new target(...args);
-            ws.addEventListener("message", (event) => {
-                processMessage(JSON.parse(event.data));
-            });
-            return ws;
-        }
-    });
-    console.log({"log-event": "ws-hooked"});
-}
 
 let character: EngineCharacter;
 
@@ -26,8 +13,7 @@ export function currentCharacter(): EngineCharacter {
     return character;
 }
 
-
-function initCharacterData(data: InitCharacterData) {
+export function initCharacterData(data: InitCharacterData) {
     const buffs: EngineBuff[] = [data.mooPassActionTypeBuffsMap, data.communityActionTypeBuffsMap, data.houseActionTypeBuffsMap, data.consumableActionTypeBuffsMap, data.equipmentActionTypeBuffsMap]
         .flatMap((buffMap) => Object.entries(buffMap).flatMap(([key, value]) => (value || []).map<EngineBuff | null>((buff) => {
             const action = getActionByHrid(key);
@@ -59,22 +45,4 @@ function initCharacterData(data: InitCharacterData) {
     }
     console.log({"log-event": "character-initialized", "character": character});
     triggerLifecycleEvent(LifecycleEvent.CharacterLoaded);
-}
-
-
-function processMessage(data: any) {
-    if (!data.hasOwnProperty("type") || typeof data.type !== "string") {
-        // ignore unknown messages
-        return;
-    }
-    if (data.type === "chat_message_received") {
-        // ignore chat messages
-        return;
-    }
-    console.log({"log-event": "handle-message", "data": data});
-    switch (data.type) {
-        case "init_character_data":
-            initCharacterData(data);
-            break;
-    }
 }

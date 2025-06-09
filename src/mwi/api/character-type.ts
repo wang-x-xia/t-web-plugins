@@ -1,48 +1,13 @@
-export interface HasId {
-    id: string
-}
+import type {HasId, HasTime} from "./common-type";
 
 export interface OwnedByCharacter {
     characterID: number
-}
-
-export interface HasTime {
-    createdAt: string
-    updatedAt: string
-}
-
-export interface InitCharacterData {
-    type: "init_character_data"
-    currentTimestamp: string
-    character: Character
-    characterInfo: CharacterInfo
-    characterSetting: CharacterSetting
-    characterActions: CharacterAction[]
-    characterQuests: CharacterQuest[]
-    characterSkills: CharacterSkill[]
-    characterAbilities: CharacterAbility[]
-    characterItems: CharacterItem[]
-    consumableCombatTriggersMap: Record<string, Trigger[]>
-    abilityCombatTriggersMap: Record<string, Trigger[]>
-    actionTypeFoodSlotsMap: Record<string, (CharacterFoodDrinkSlot | null)[]>
-    characterLoadoutMap: Record<string, CharacterLoadout>
-    combatUnit: CombatUnit
-    noncombatStats: NoncombatStats
-    characterHouseRoomMap: Record<string, CharacterHouseRoom>
-    chatHistoryByChannelMap: Record<string, any[]>
-    actionTypeDrinkSlotsMap: Record<string, (CharacterFoodDrinkSlot | null)[]>
-    mooPassActionTypeBuffsMap: Record<string, Buff[]>
-    communityActionTypeBuffsMap: Record<string, Buff[]>
-    houseActionTypeBuffsMap: Record<string, Buff[]>
-    consumableActionTypeBuffsMap: Record<string, Buff[]>
-    equipmentActionTypeBuffsMap: Record<string, Buff[]>
 }
 
 export interface Character extends HasId, HasTime {
     gameMode: "standard"
     name: string
 }
-
 
 export interface CharacterInfo extends OwnedByCharacter {
     offlineHourCap: number
@@ -78,7 +43,7 @@ export interface CharacterQuest extends HasId, HasTime, OwnedByCharacter {
     goalCount: number
     currentCount: number
     /**
-     * JSON of ItemReward[]
+     * JSON of ItemCount[]
      */
     itemRewardsJSON: string
     status: "/quest_status/in_progress"
@@ -87,10 +52,6 @@ export interface CharacterQuest extends HasId, HasTime, OwnedByCharacter {
     mooPassRerollCount: number
 }
 
-export interface ItemReward {
-    itemHrid: string
-    count: number
-}
 
 export interface CharacterSkill extends HasTime, OwnedByCharacter {
     skillHrid: string
@@ -113,13 +74,6 @@ export interface CharacterItem extends HasId, HasTime, OwnedByCharacter {
     count: number
     offlineCount: number
     hash: string
-}
-
-export interface Trigger {
-    dependencyHrid: string
-    conditionHrid: string
-    comparatorHrid: string
-    value: number
 }
 
 export interface CharacterFoodDrinkSlot extends OwnedByCharacter {

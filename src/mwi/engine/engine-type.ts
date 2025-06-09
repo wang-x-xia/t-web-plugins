@@ -1,5 +1,5 @@
-import type {CharacterFoodDrinkSlot, CharacterSkill, NoncombatStats} from "./api-type";
-import {type Action, BuffSource, BuffType} from "./hrid";
+import type {CharacterFoodDrinkSlot, CharacterSkill, NoncombatStats} from "../api/character-type";
+import {type Action, BuffSource, BuffType} from "../hrid";
 
 export interface EngineCharacter {
     skills: Record<Action, CharacterSkill | null>
