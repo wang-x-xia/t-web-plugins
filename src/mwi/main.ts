@@ -1,4 +1,4 @@
-import {setupEngineHook} from "./engine";
+import {setupEngineHook} from "./engine/engine";
 import {foragingPlugin} from "./foraging-plugins";
 import {setupApp} from "./view";
 

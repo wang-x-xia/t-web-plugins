@@ -1,6 +1,6 @@
 import * as React from "react";
-import {currentCharacter} from "./engine";
-import type {EngineBuff} from "./engine-type";
+import {currentCharacter} from "./engine/character";
+import type {EngineBuff} from "./engine/engine-type";
 import {Action, BuffType} from "./hrid";
 import {LifecycleEvent, registerLifecycle} from "./lifecycle";
 import {AddView} from "./view";
