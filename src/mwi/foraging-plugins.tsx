@@ -21,7 +21,11 @@ import {AddView} from "./view";
 
 export function foragingPlugin() {
     registerLifecycle("foraging-plugin", [LifecycleEvent.CharacterLoaded], () => {
-        AddView("foraging", <ShowForaging/>)
+        AddView({
+            id: "foraging",
+            name: "Foraging",
+            node: <ShowForaging/>
+        })
     })
 }
 
@@ -77,7 +81,6 @@ export function ShowForaging() {
 
 
     return <div>
-        <div>Foraging</div>
         <table>
             <thead>
             <tr>

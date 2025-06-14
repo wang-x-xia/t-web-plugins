@@ -2,7 +2,13 @@ import {useEffect, useState} from "react";
 import {log} from "../shared/log";
 
 export function saveSettings(name: string, settings: any) {
+    log("save-settings", {name, settings})
     GM_setValue(name, JSON.stringify(settings));
+    for (const hook of updateHooks) {
+        if (hook.setting === name) {
+            hook.callback(settings);
+        }
+    }
 }
 
 export function loadSettings<T>(name: string, default_value: T): T {
