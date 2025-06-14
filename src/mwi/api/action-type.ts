@@ -19,7 +19,7 @@ export interface ActionDetails extends HridInfo {
         skillHrid: string,
         value: number
     }
-    dropTable: null
+    dropTable: DropInfo[] | null
     essenceDropTable: DropInfo[] | null
     rareDropTable: DropInfo[] | null
     upgradeItemHrid: string

@@ -1,19 +1,11 @@
 import type {CharacterFoodDrinkSlot, CharacterSkill, NoncombatStats} from "../api/character-type";
-import {type Action, BuffSource, BuffType} from "../hrid";
+import {type AnyActionType} from "./action";
+import {type Buff} from "./buff";
 
 export interface EngineCharacter {
-    skills: Record<Action, CharacterSkill | null>
+    skills: Record<AnyActionType, CharacterSkill | null>
     drinkSlots: Record<string, (CharacterFoodDrinkSlot | null)[]>
     noncombatStats: NoncombatStats,
-    buffs: EngineBuff[]
+    buffs: Buff[]
 }
 
-export interface EngineBuff {
-    action: Action,
-    type: BuffType,
-    source: BuffSource,
-    ratioBoost: number
-    ratioBoostLevelBonus: number
-    flatBoost: number
-    flatBoostLevelBonus: number
-}
