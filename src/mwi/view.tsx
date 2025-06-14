@@ -2,8 +2,9 @@ import * as React from "react";
 import {useEffect, useRef, useState} from "react";
 import {createRoot} from "react-dom/client";
 import {Rnd} from "react-rnd";
+import {warn} from "../shared/log";
 import viewStyles from "./component/view.module.css";
-import {loadSettings, saveSettings} from "./settings";
+import {loadSettings, saveSettings, useSettings} from "./settings";
 
 export function setupApp() {
     const container = document.createElement("div")
@@ -13,18 +14,21 @@ export function setupApp() {
 }
 
 interface ChildView {
-    id: string
+    id: string,
+    name: string,
     node: React.ReactNode
 }
 
 const childrenBefore: ChildView[] = []
 let addView: ((child: ChildView) => void) | undefined = undefined
 
-export function AddView(id: string, child: React.ReactNode) {
+export function AddView(child: ChildView) {
     if (addView) {
-        addView({id, node: child});
+        addView(child);
+    } else if (childrenBefore.find((c) => c.id === child.id)) {
+        warn("duplicate-view", {view: child});
     } else {
-        childrenBefore.push({id, node: child});
+        childrenBefore.push(child);
     }
 }
 
@@ -42,7 +46,7 @@ function App() {
     useEffect(() => {
         addView = (child) => {
             if (children.find((c) => c.id === child.id)) {
-                console.warn({"log-event": "duplicate-view", "id": child.id});
+                warn("duplicate-view", {child});
                 return;
             }
             setChildren([...children, child]);
@@ -103,8 +107,34 @@ function App() {
             </div>
             <div className={viewStyles.content}>
                 {children.map((child) =>
-                    <div className={viewStyles.child} key={child.id}>{child.node}</div>)}
+                    <ViewChild key={child.id} {...child}/>)}
             </div>
         </div>
     </Rnd>
+}
+
+function ViewChild({id, name, node}: ChildView) {
+    const show = useSettings(`view.${id}.show`, true);
+
+    if (!show) {
+        return <div className={viewStyles.child}>
+            {name}
+            <button onClick={() => {
+                saveSettings(`view.${id}.show`, true);
+            }}>+
+            </button>
+        </div>
+    }
+
+    return <div className={viewStyles.child}>
+        <div>
+            {name}
+            <button onClick={() => {
+                saveSettings(`view.${id}.show`, false);
+            }}>-
+            </button>
+        </div>
+        {node}
+    </div>
+
 }
