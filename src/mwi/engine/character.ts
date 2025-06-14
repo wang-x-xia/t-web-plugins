@@ -1,8 +1,10 @@
 import type {CharacterSkill} from "../api/character-type";
 import type {InitCharacterData} from "../api/message-type";
-import {Action, getActionByHrid, getBuffSourceByHrid, getBuffTypeByHrid, getSkillHrid} from "../hrid";
 import {LifecycleEvent, triggerLifecycleEvent} from "../lifecycle";
-import type {EngineBuff, EngineCharacter} from "./engine-type";
+import {AllActionType, type AnyActionType} from "./action";
+import type {Buff} from "./buff";
+import type {EngineCharacter} from "./engine-type";
+import {getActionByHrid, getBuffSourceByHrid, getBuffTypeByHrid, getSkillHrid} from "./hrid";
 
 let character: EngineCharacter;
 
@@ -14,8 +16,8 @@ export function currentCharacter(): EngineCharacter {
 }
 
 export function initCharacterData(data: InitCharacterData) {
-    const buffs: EngineBuff[] = [data.mooPassActionTypeBuffsMap, data.communityActionTypeBuffsMap, data.houseActionTypeBuffsMap, data.consumableActionTypeBuffsMap, data.equipmentActionTypeBuffsMap]
-        .flatMap((buffMap) => Object.entries(buffMap).flatMap(([key, value]) => (value || []).map<EngineBuff | null>((buff) => {
+    const buffs: Buff[] = [data.mooPassActionTypeBuffsMap, data.communityActionTypeBuffsMap, data.houseActionTypeBuffsMap, data.consumableActionTypeBuffsMap, data.equipmentActionTypeBuffsMap]
+        .flatMap((buffMap) => Object.entries(buffMap).flatMap(([key, value]) => (value || []).map<Buff | null>((buff) => {
             const action = getActionByHrid(key);
             const type = getBuffTypeByHrid(buff.typeHrid);
             const source = getBuffSourceByHrid(buff.uniqueHrid);
@@ -35,10 +37,10 @@ export function initCharacterData(data: InitCharacterData) {
         })))
         .filter(it => it != null);
     character = {
-        skills: Object.values(Action).reduce((acc, key) => ({
+        skills: Object.values(AllActionType).reduce((acc, key) => ({
             ...acc,
             [key]: data.characterSkills.find((skill) => skill.skillHrid === getSkillHrid(key)) || null,
-        }), {} as Record<Action, CharacterSkill | null>),
+        }), {} as Record<AnyActionType, CharacterSkill | null>),
         drinkSlots: data.actionTypeDrinkSlotsMap,
         noncombatStats: data.noncombatStats,
         buffs,
