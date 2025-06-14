@@ -1,3 +1,4 @@
+import type {BuffUniqueDetails} from "./buff-type";
 import type {HridInfo} from "./common-type";
 
 export interface ItemDetails extends HridInfo {
@@ -7,6 +8,11 @@ export interface ItemDetails extends HridInfo {
     isTradable?: true
     isOpenable?: true
     itemLevel: number
+    consumableDetail?: {
+        cooldownDuration: number
+        usableInActionTypeMap: Record<string, true>
+        buffs: BuffUniqueDetails[] | null,
+    }
 
     [key: string]: any
 }

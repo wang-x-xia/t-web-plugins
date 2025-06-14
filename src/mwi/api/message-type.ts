@@ -1,5 +1,5 @@
 import type {ActionCategoryDetails, ActionDetails, DropInfo} from "./action-type";
-import type {BuffTypeDetails} from "./buff-type";
+import type {BuffTypeDetails, CommunityBuffTypeDetails} from "./buff-type";
 import type {
     Buff,
     Character,
@@ -68,6 +68,7 @@ export interface InitClientData {
     guildCharacterRoleDetailMap: Record<string, any>
     leaderboardTypeDetailMap: Record<string, any>
     leaderboardCategoryDetailMap: Record<string, any>
+    communityBuffTypeDetailMap: Record<string, CommunityBuffTypeDetails>
 }
 
 export interface InitCharacterData {

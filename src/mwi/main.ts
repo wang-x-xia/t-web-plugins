@@ -1,3 +1,4 @@
+import {log} from "../shared/log";
 import {setupEngineHook} from "./engine/engine";
 import {setupMarketData} from "./engine/market";
 import {foragingPlugin} from "./foraging-plugins";
@@ -17,8 +18,8 @@ async function main() {
 
 main()
     .catch((e) => {
-        console.error({"log-event": "init-failed", "error": e});
+        console.error({"log-event": "init-failed"}, e);
     })
     .finally(() => {
-        console.log({"log-event": "init-finished"})
+        log("init-finished", {})
     })

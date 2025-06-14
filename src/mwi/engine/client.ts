@@ -1,15 +1,37 @@
 import type {InitClientData} from "../api/message-type";
 import {type CollectAction, CollectActionType} from "./action";
+import {BuffSource} from "./buff";
 import {type DropItem, DropType} from "./drop";
-import {getActionTypeHrid} from "./hrid";
+import {getActionTypeHrid, getBuffSourceByHrid} from "./hrid";
 
 let clientData: InitClientData | null = null;
-let collectActions: Record<CollectActionType, CollectAction[]> | null = null;
+
+export function getClientData(): InitClientData {
+    if (!clientData) {
+        throw new Error("Client data not initialized");
+    }
+    return clientData;
+}
+
 
 export function initClientData(data: InitClientData) {
     clientData = data;
+    collectActions = initCollectActions(data);
+    buffSourceNames = initBuffSourceNames(data);
+}
 
-    collectActions = Object.values(CollectActionType).reduce((acc, key) => {
+let collectActions: Record<CollectActionType, CollectAction[]> | null = null;
+
+export function getCollectActions(actionType: CollectActionType): CollectAction[] {
+    if (!collectActions) {
+        throw new Error("Collect actions not initialized");
+    }
+    return collectActions[actionType]
+}
+
+
+function initCollectActions(data: InitClientData) {
+    return Object.fromEntries(Object.values(CollectActionType).map((key) => {
         const typeHrid = getActionTypeHrid(key);
 
         const collectActions = Object.values(data.actionDetailMap)
@@ -44,22 +66,37 @@ export function initClientData(data: InitClientData) {
                     dropTable: dropTable,
                 };
             });
-        return {...acc, [key]: collectActions};
-    }, {} as Record<CollectActionType, CollectAction[]>)
+        return [key, collectActions];
+    })) as Record<CollectActionType, CollectAction[]>
 }
 
-export function getClientData(): InitClientData {
-    if (!clientData) {
-        throw new Error("Client data not initialized");
+let buffSourceNames: Record<BuffSource, string> | null = null;
+
+export function getBuffSourceName(source: BuffSource) {
+    if (!buffSourceNames) {
+        throw new Error("Buff source names not initialized");
     }
-    return clientData;
+    return buffSourceNames[source] ?? source;
 }
 
 
-export function getCollectActions(actionType: CollectActionType): CollectAction[] {
-    if (!collectActions) {
-        throw new Error("Collect actions not initialized");
-    }
-    return collectActions[actionType]
+function initBuffSourceNames(data: InitClientData) {
+    return Object.fromEntries([
+        ...Object.values(data.communityBuffTypeDetailMap)
+            .map((buffDetails) =>
+                [getBuffSourceByHrid(buffDetails.buff.uniqueHrid), "Community Buff: " + buffDetails.name]),
+        ...Object.values(data.itemDetailMap).filter(itemDetails => itemDetails.consumableDetail?.buffs)
+            .flatMap((itemDetails) =>
+                itemDetails.consumableDetail!.buffs!.map((buff) => {
+                    return [getBuffSourceByHrid(buff.uniqueHrid), "Item: " + itemDetails.name]
+                })),
+        ...Object.values(data.houseRoomDetailMap).flatMap((roomDetails) =>
+            [...roomDetails.actionBuffs, ...roomDetails.globalBuffs].map((buff) =>
+                [getBuffSourceByHrid(buff.uniqueHrid), "House: " + roomDetails.name])),
+        ...[
+            [BuffSource.MooPassExperience, "Moo Pass"],
+            [BuffSource.Equipment, "Equipment"],
+        ]
+    ]) as Record<BuffSource, string>
 }
 

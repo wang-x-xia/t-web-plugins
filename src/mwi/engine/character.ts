@@ -1,3 +1,4 @@
+import {log} from "../../shared/log";
 import type {CharacterSkill} from "../api/character-type";
 import type {InitCharacterData} from "../api/message-type";
 import {LifecycleEvent, triggerLifecycleEvent} from "../lifecycle";
@@ -16,13 +17,25 @@ export function currentCharacter(): EngineCharacter {
 }
 
 export function initCharacterData(data: InitCharacterData) {
+    character = {
+        drinkSlots: data.actionTypeDrinkSlotsMap,
+        noncombatStats: data.noncombatStats,
+        ...initBuffs(data),
+        ...initSkill(data),
+    }
+    log("character-initialized", {"character": character});
+    triggerLifecycleEvent(LifecycleEvent.CharacterLoaded);
+}
+
+
+export function initBuffs(data: InitCharacterData): { buffs: Buff[] } {
     const buffs: Buff[] = [data.mooPassActionTypeBuffsMap, data.communityActionTypeBuffsMap, data.houseActionTypeBuffsMap, data.consumableActionTypeBuffsMap, data.equipmentActionTypeBuffsMap]
         .flatMap((buffMap) => Object.entries(buffMap).flatMap(([key, value]) => (value || []).map<Buff | null>((buff) => {
             const action = getActionByHrid(key);
             const type = getBuffTypeByHrid(buff.typeHrid);
             const source = getBuffSourceByHrid(buff.uniqueHrid);
             if (!action || !type || !source) {
-                console.log({"log-event": "invalid-buff", "action": key, "buff": buff});
+                log("invalid-buff", {"action": key, "buff": buff});
                 return null;
             }
             return {
@@ -35,16 +48,19 @@ export function initCharacterData(data: InitCharacterData) {
                 flatBoostLevelBonus: buff.flatBoostLevelBonus,
             }
         })))
-        .filter(it => it != null);
-    character = {
-        skills: Object.values(AllActionType).reduce((acc, key) => ({
-            ...acc,
-            [key]: data.characterSkills.find((skill) => skill.skillHrid === getSkillHrid(key)) || null,
-        }), {} as Record<AnyActionType, CharacterSkill | null>),
-        drinkSlots: data.actionTypeDrinkSlotsMap,
-        noncombatStats: data.noncombatStats,
+        .filter(it => it != null)
+
+    return {
         buffs,
     }
-    console.log({"log-event": "character-initialized", "character": character});
-    triggerLifecycleEvent(LifecycleEvent.CharacterLoaded);
+}
+
+export function initSkill(data: InitCharacterData): { skills: Record<AnyActionType, CharacterSkill | null> } {
+    const skills = Object.values(AllActionType).reduce((acc, key) => ({
+        ...acc,
+        [key]: data.characterSkills.find((skill) => skill.skillHrid === getSkillHrid(key)) || null,
+    }), {} as Record<AnyActionType, CharacterSkill | null>)
+    return {
+        skills,
+    }
 }
