@@ -1,11 +1,24 @@
 import {setupEngineHook} from "./engine/engine";
+import {setupMarketData} from "./engine/market";
 import {foragingPlugin} from "./foraging-plugins";
 import {setupApp} from "./view";
 
-setupEngineHook();
+async function main() {
+    setupEngineHook();
 
-window.addEventListener("load", (e) => {
-    setupApp();
-});
+    window.addEventListener("load", () => {
+        setupApp();
+    });
 
-foragingPlugin()
+    await setupMarketData();
+
+    foragingPlugin()
+}
+
+main()
+    .catch((e) => {
+        console.error({"log-event": "init-failed", "error": e});
+    })
+    .finally(() => {
+        console.log({"log-event": "init-finished"})
+    })

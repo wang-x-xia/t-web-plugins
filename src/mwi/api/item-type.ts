@@ -4,7 +4,8 @@ export interface ItemDetails extends HridInfo {
     description: string
     categoryHrid: string
     sellPrice: number
-    isTradable: boolean
+    isTradable?: true
+    isOpenable?: true
     itemLevel: number
 
     [key: string]: any

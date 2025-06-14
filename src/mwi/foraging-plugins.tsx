@@ -11,8 +11,9 @@ import {
 } from "./engine/buff";
 import {currentCharacter} from "./engine/character";
 import {getCollectActions} from "./engine/client";
-import {type DropItem, DropType} from "./engine/drop";
+import {DropType} from "./engine/drop";
 import {getItemName} from "./engine/item";
+import {getSellPriceByHrid} from "./engine/market";
 import {LifecycleEvent, registerLifecycle} from "./lifecycle";
 import {AddView} from "./view";
 
@@ -22,11 +23,56 @@ export function foragingPlugin() {
     })
 }
 
+export interface ActionRow {
+    action: CollectAction
+    totalIncome: number
+    dropItemRows: DropItemRow[]
+}
+
 
 export function ShowForaging() {
+    const [expandDropTable, setExpandDropTable] = React.useState(false);
+
     const character = currentCharacter();
     const buffs = character.buffs.filter(b => b.action === CollectActionType.Foraging);
-    const actions = getCollectActions(CollectActionType.Foraging)
+    const actionRows: ActionRow[] = getCollectActions(CollectActionType.Foraging)
+        .map(action => {
+            const dropItemRows = action.dropTable.map((item) => {
+                let count = item.dropRate
+                    * (3600 / getTimeCostAfterBuff(action))
+                    * (item.maxCount + item.minCount) / 2
+                    * getEfficiencyAfterBuff(action);
+                switch (item.type) {
+                    case DropType.Common:
+                        count = count * getGatheringAfterBuff(action);
+                        break;
+                    case DropType.Essence:
+                        break;
+                    case DropType.Rare:
+                        count = count * getRareFindAfterBuff(action);
+                        break;
+                }
+                const price = getSellPriceByHrid(item.itemHrid);
+                const income = count * price;
+                return {
+                    name: getItemName(item.itemHrid),
+                    count: count,
+                    price: price,
+                    percent: 0,
+                    income: income,
+                }
+            })
+            const totalIncome = dropItemRows.reduce((acc, row) => acc + row.income, 0);
+            dropItemRows.forEach((row) => row.percent = row.income / totalIncome);
+
+            return {
+                action: action,
+                totalIncome,
+                dropItemRows,
+            }
+        })
+        .sort((a, b) => b.totalIncome - a.totalIncome);
+
 
     return <div>
         <div>Foraging</div>
@@ -39,63 +85,70 @@ export function ShowForaging() {
             <tr>
                 <th>Name</th>
                 <th>Category</th>
+                <th>Income/h</th>
                 <th>Rate</th>
-                <th>Drop Table</th>
+                <th>Drop Table
+                    <button onClick={() => setExpandDropTable(!expandDropTable)}>
+                        {expandDropTable ? "-" : "+"}
+                    </button>
+                </th>
             </tr>
             </thead>
             <tbody>
-            {actions.map((action) => <tr key={action.hrid}>
+            {actionRows.map(({action, totalIncome, dropItemRows}) => <tr key={action.hrid}>
                 <td>{action.name}</td>
                 <td>{action.category.name}</td>
+                <td>{totalIncome.toFixed(2)}</td>
                 <td>
                     <p>{action.baseTimeCost.toFixed(2)} s {"->"} {getTimeCostAfterBuff(action).toFixed(2)} s</p>
                     <p>{(3600 / getTimeCostAfterBuff(action)).toFixed(2)} times/h</p>
                     <p>Efficiency: {getEfficiencyAfterBuff(action).toFixed(2)} ×</p>
-                    <p>Gathering: {getGatheringAfterBuff(action).toFixed(2)} ×</p>
-                    <p>Rare find: {getRareFindAfterBuff(action).toFixed(2)} ×</p>
                 </td>
-                <td><ShowDropTable action={action}/></td>
+                <td><ShowDropTable rows={dropItemRows} expand={expandDropTable}/></td>
             </tr>)}
             </tbody>
         </table>
     </div>
 }
 
-
-export function ShowDropTable({action}: { action: CollectAction }) {
-    return <table>
-        <thead>
-        <tr>
-            <th>Name</th>
-            <th>Count / hour</th>
-        </tr>
-        </thead>
-        <tbody>
-        {action.dropTable.map((item) =>
-            <ShowDropItem key={item.itemHrid} item={item} action={action}/>)}
-        </tbody>
-    </table>
+interface DropItemRow {
+    name: string,
+    count: number,
+    price: number,
+    income: number,
+    percent: number,
 }
 
-function ShowDropItem({item, action}: { item: DropItem, action: CollectAction }) {
-    let count = item.dropRate
-        * (3600 / getTimeCostAfterBuff(action))
-        * (item.maxCount + item.minCount) / 2
-        * getEfficiencyAfterBuff(action);
-    switch (item.type) {
-        case DropType.Common:
-            count = count * getGatheringAfterBuff(action);
-            break;
-        case DropType.Essence:
-            break;
-        case DropType.Rare:
-            count = count * getRareFindAfterBuff(action);
-            break;
+export function ShowDropTable({rows, expand: allExpand}: { rows: DropItemRow[], expand: boolean }) {
+    const [expand, setExpand] = React.useState(allExpand);
+
+    if (!expand && !allExpand) {
+        return <button onClick={() => setExpand(true)}>+</button>
     }
-    return <tr>
-        <td>{getItemName(item.itemHrid)}</td>
-        <td>{count.toFixed(2)}</td>
-    </tr>
+
+    return <>
+        {!allExpand && <button onClick={() => setExpand(!expand)}>-</button>}
+        <table>
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Count/h</th>
+                <th>Price</th>
+                <th>Income/h</th>
+                <th>Radio</th>
+            </tr>
+            </thead>
+            <tbody>
+            {rows.map((row) => <tr key={row.name}>
+                <td>{row.name}</td>
+                <td>{row.count.toFixed(2)}</td>
+                <td>{row.price.toFixed(0)}</td>
+                <td>{row.income.toFixed(2)}</td>
+                <td>{(row.percent * 100).toFixed(2)}%</td>
+            </tr>)}
+            </tbody>
+        </table>
+    </>
 }
 
 export function ShowBuffValue({buffType, buffs}: { buffType: CollectBuffType, buffs: Buff[] }) {
