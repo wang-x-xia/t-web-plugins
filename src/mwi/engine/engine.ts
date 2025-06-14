@@ -1,10 +1,11 @@
+import {log} from "../../shared/log";
 import {initCharacterData} from "./character";
 import {initClientData} from "./client";
 
 export function setupEngineHook() {
     unsafeWindow.WebSocket = new Proxy(WebSocket, {
         construct(target, args: ConstructorParameters<typeof WebSocket>) {
-            console.log({"log-event": "ws-created", "args": args});
+            log("ws-created", {"args": args});
             const ws = new target(...args);
             ws.addEventListener("message", (event) => {
                 processMessage(JSON.parse(event.data));
@@ -12,7 +13,7 @@ export function setupEngineHook() {
             return ws;
         }
     });
-    console.log({"log-event": "ws-hooked"});
+    log("ws-hooked", {});
     if (localStorage.getItem("initClientData") != null) {
         processMessage(JSON.parse(localStorage.getItem("initClientData")!!));
     }
@@ -28,7 +29,7 @@ function processMessage(data: any) {
         // ignore chat messages
         return;
     }
-    console.log({"log-event": "handle-message", "type": data.type, "data": data});
+    log("handle-message", {"type": data.type, "data": data});
     switch (data.type) {
         case "init_character_data":
             initCharacterData(data);

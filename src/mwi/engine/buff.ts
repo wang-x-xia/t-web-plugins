@@ -1,5 +1,7 @@
 import {type AnyActionType, type CollectAction} from "./action";
 import {currentCharacter} from "./character";
+import {getClientData} from "./client";
+import {getBuffHrid} from "./hrid";
 
 export type AnyBuffType = CollectBuffType | OtherBuffType | CombatBuffType
 
@@ -97,4 +99,8 @@ export function getGatheringAfterBuff(action: CollectAction) {
 
 export function getRareFindAfterBuff(action: CollectAction) {
     return 1 + getSumOfBuff(getBuffsOfActionType(action.type), CollectBuffType.RareFind)
+}
+
+export function getBuffTypeName(action: AnyBuffType) {
+    return getClientData().buffTypeDetailMap[getBuffHrid(action)].name
 }

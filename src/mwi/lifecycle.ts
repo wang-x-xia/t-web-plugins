@@ -1,3 +1,5 @@
+import {log} from "../shared/log";
+
 export enum LifecycleEvent {
     CharacterLoaded = "character-loaded",
 }
@@ -22,7 +24,7 @@ export function triggerLifecycleEvent(event: LifecycleEvent) {
     const callbacksForEvent = Object.values(callbacks).filter(cb => cb.events.includes(event));
     callbacksForEvent.forEach(cb => {
         try {
-            console.log({"log-event": "lifecycle", "event": event, "name": cb.name});
+            log("lifecycle", {"event": event, "name": cb.name});
             cb.cb();
         } catch (e) {
             console.error(e);

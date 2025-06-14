@@ -1,8 +1,10 @@
 import * as React from "react";
+import {ShowNumber, ShowPercent} from "./component/number";
 import {type CollectAction, CollectActionType} from "./engine/action";
 import {
     type Buff,
     CollectBuffType,
+    getBuffTypeName,
     getEfficiencyAfterBuff,
     getGatheringAfterBuff,
     getRareFindAfterBuff,
@@ -10,7 +12,7 @@ import {
     getTimeCostAfterBuff
 } from "./engine/buff";
 import {currentCharacter} from "./engine/character";
-import {getCollectActions} from "./engine/client";
+import {getBuffSourceName, getCollectActions} from "./engine/client";
 import {DropType} from "./engine/drop";
 import {getItemName} from "./engine/item";
 import {getSellPriceByHrid} from "./engine/market";
@@ -19,7 +21,7 @@ import {AddView} from "./view";
 
 export function foragingPlugin() {
     registerLifecycle("foraging-plugin", [LifecycleEvent.CharacterLoaded], () => {
-        AddView(<ShowForaging/>)
+        AddView("foraging", <ShowForaging/>)
     })
 }
 
@@ -76,10 +78,24 @@ export function ShowForaging() {
 
     return <div>
         <div>Foraging</div>
-        {
-            Object.values(CollectBuffType).map((buffType) =>
-                <ShowBuffValue key={buffType} buffType={buffType} buffs={buffs}/>)
-        }
+        <table>
+            <thead>
+            <tr>
+                <th>Buff Type</th>
+                <th>Value</th>
+                <th>Source</th>
+            </tr>
+            </thead>
+            <tbody>
+            {Object.values(CollectBuffType).map((buffType) =>
+                <tr key={buffType}>
+                    <ShowBuffValue key={buffType} buffType={buffType} buffs={buffs}/>
+                </tr>)
+            }
+            </tbody>
+        </table>
+
+
         <table>
             <thead>
             <tr>
@@ -98,11 +114,14 @@ export function ShowForaging() {
             {actionRows.map(({action, totalIncome, dropItemRows}) => <tr key={action.hrid}>
                 <td>{action.name}</td>
                 <td>{action.category.name}</td>
-                <td>{totalIncome.toFixed(2)}</td>
+                <td><ShowNumber value={totalIncome}/></td>
                 <td>
-                    <p>{action.baseTimeCost.toFixed(2)} s {"->"} {getTimeCostAfterBuff(action).toFixed(2)} s</p>
-                    <p>{(3600 / getTimeCostAfterBuff(action)).toFixed(2)} times/h</p>
-                    <p>Efficiency: {getEfficiencyAfterBuff(action).toFixed(2)} ×</p>
+                    <div>
+                        <ShowNumber value={action.baseTimeCost}/> s {"->"}
+                        <ShowNumber value={getTimeCostAfterBuff(action)}/> s
+                    </div>
+                    <div><ShowNumber value={(3600 / getTimeCostAfterBuff(action))}/> times/h</div>
+                    <div>Efficiency: <ShowNumber value={getEfficiencyAfterBuff(action)}/> ×</div>
                 </td>
                 <td><ShowDropTable rows={dropItemRows} expand={expandDropTable}/></td>
             </tr>)}
@@ -141,10 +160,10 @@ export function ShowDropTable({rows, expand: allExpand}: { rows: DropItemRow[], 
             <tbody>
             {rows.map((row) => <tr key={row.name}>
                 <td>{row.name}</td>
-                <td>{row.count.toFixed(2)}</td>
-                <td>{row.price.toFixed(0)}</td>
-                <td>{row.income.toFixed(2)}</td>
-                <td>{(row.percent * 100).toFixed(2)}%</td>
+                <td><ShowNumber value={row.count}/></td>
+                <td><ShowNumber value={row.price}/></td>
+                <td><ShowNumber value={row.income}/></td>
+                <td><ShowPercent value={row.percent}/></td>
             </tr>)}
             </tbody>
         </table>
@@ -156,9 +175,24 @@ export function ShowBuffValue({buffType, buffs}: { buffType: CollectBuffType, bu
     const value = getSumOfBuff(buffs, buffType);
 
     return <>
-        <div>{buffType}: {`${(value * 100).toFixed(2)}%`}</div>
-        <ul>
-            {typeBuff.map(b => <li key={b.source}>{b.source}: {`${(b.flatBoost * 100).toFixed(2)}%`}</li>)}
-        </ul>
+        <th>{getBuffTypeName(buffType)}</th>
+        <td><ShowPercent value={value}/></td>
+        <td>
+            <table>
+                <thead>
+                <tr>
+                    <th>Source</th>
+                    <th>Value</th>
+                </tr>
+                </thead>
+                <tbody>
+                {typeBuff.map(b =>
+                    <tr key={b.source}>
+                        <th>{getBuffSourceName(b.source)}</th>
+                        <td><ShowPercent value={b.flatBoost}/></td>
+                    </tr>)}
+                </tbody>
+            </table>
+        </td>
     </>
 }

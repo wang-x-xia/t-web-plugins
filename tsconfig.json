@@ -9,6 +9,11 @@
     ],
     "removeComments": false,
     "strict": true,
-    "jsx": "react"
+    "jsx": "react",
+    "plugins": [
+      {
+        "name": "typescript-plugin-css-modules"
+      }
+    ]
   }
 }

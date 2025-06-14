@@ -1,0 +1,47 @@
+.container {
+    z-index: 1000000;
+}
+
+.app {
+    padding: 2px;
+    font-size: 14px;
+    background: white;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.app table {
+    border-collapse: collapse;
+}
+
+.app table th {
+    border: 1px solid black;
+}
+
+.app table td {
+    border: 1px solid black;
+}
+
+.header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 5px 10px;
+    font-weight: bold;
+    background: gray;
+}
+
+.content {
+    background: white;
+    overflow: auto;
+    flex-grow: 1;
+    padding: 2px;
+}
+
+.child {
+    border: 1px solid black;
+    padding: 2px;
+    margin: 2px;
+}

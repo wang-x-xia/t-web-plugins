@@ -1,4 +1,5 @@
 import {useEffect, useState} from "react";
+import {log} from "../shared/log";
 
 export function saveSettings(name: string, settings: any) {
     GM_setValue(name, JSON.stringify(settings));
@@ -20,12 +21,12 @@ interface SettingUpdateHook {
 const updateHooks: SettingUpdateHook[] = [];
 
 export function registerSettingsUpdateHook(cb: SettingUpdateHook) {
-    console.log({"log-event": "register-settings-update-hook", "cb": cb})
+    log("register-settings-update-hook", {cb})
     updateHooks.push(cb);
     return () => {
         const index = updateHooks.indexOf(cb);
         if (index > -1) {
-            console.log({"log-event": "unregister-settings-update-hook", "cb": cb})
+            log("unregister-settings-update-hook", {cb})
             updateHooks.splice(index, 1);
         }
     }

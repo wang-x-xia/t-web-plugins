@@ -1,3 +1,4 @@
+import {log} from "../../shared/log";
 import {getOpenableItem, isItemOpenable} from "./item";
 
 const MarketSource = "https://www.milkywayidle.com/game_data/marketplace.json"
@@ -39,13 +40,13 @@ export async function setupMarketData() {
         markerData = JSON.parse(GM_getValue("marketdata", "{}") as string) as MarketData;
         if (Date.now() / 1000 - markerData.timestamp <= 6 * 60 * 60) {
             // Use cached data
-            console.log({"log-event": "use-cached-market-data", "data": markerData});
+            log("use-cached-market-data", {"data": markerData});
             return;
         } else {
-            console.log({"log-event": "market-data-expired", "data": markerData});
+            log("market-data-expired", {"data": markerData});
         }
     }
     markerData = (await (await fetch(MarketSource)).json()) as MarketData;
     GM_setValue("marketdata", JSON.stringify(markerData));
-    console.log({"log-event": "loaded-market-data", "data": markerData});
+    log("loaded-market-data", {"data": markerData});
 }

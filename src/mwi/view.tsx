@@ -2,6 +2,7 @@ import * as React from "react";
 import {useEffect, useRef, useState} from "react";
 import {createRoot} from "react-dom/client";
 import {Rnd} from "react-rnd";
+import viewStyles from "./component/view.module.css";
 import {loadSettings, saveSettings} from "./settings";
 
 export function setupApp() {
@@ -11,22 +12,26 @@ export function setupApp() {
     createRoot(container).render(<App></App>);
 }
 
+interface ChildView {
+    id: string
+    node: React.ReactNode
+}
 
-const childrenBefore: React.ReactNode[] = []
-let addView: ((child: React.ReactNode) => void) | undefined = undefined
+const childrenBefore: ChildView[] = []
+let addView: ((child: ChildView) => void) | undefined = undefined
 
-export function AddView(child: React.ReactNode) {
+export function AddView(id: string, child: React.ReactNode) {
     if (addView) {
-        addView(child);
+        addView({id, node: child});
     } else {
-        childrenBefore.push(child);
+        childrenBefore.push({id, node: child});
     }
 }
 
 function App() {
     const [show, setShow] = useState(true);
     const [editMode, setEditMode] = useState(false);
-    const [children, setChildren] = useState<React.ReactNode>(childrenBefore);
+    const [children, setChildren] = useState<ChildView[]>(childrenBefore);
     const position = useRef(loadSettings("view.position", {
         x: 0,
         y: 0,
@@ -35,7 +40,13 @@ function App() {
     }))
 
     useEffect(() => {
-        addView = setChildren;
+        addView = (child) => {
+            if (children.find((c) => c.id === child.id)) {
+                console.warn({"log-event": "duplicate-view", "id": child.id});
+                return;
+            }
+            setChildren([...children, child]);
+        };
         return () => {
             addView = undefined;
         }
@@ -61,13 +72,7 @@ function App() {
     return <Rnd
         default={position.current}
         bounds="window"
-        style={{
-            zIndex: 1000000,
-            padding: "2px",
-            fontSize: "14px",
-            overflow: "auto",
-            background: "white",
-        }}
+        className={viewStyles.container}
         disableDragging={!editMode}
         enableResizing={editMode}
         onResizeStop={(_event, _direction, ref) => {
@@ -79,34 +84,27 @@ function App() {
             position.current.y = data.y;
         }}
     >
-        <div style={{
-            display: "flex",
-            flexDirection: "row",
-            justifyContent: "space-between",
-            padding: "10px",
-            fontWeight: "bold",
-            background: "gray",
-        }}>
-            <div>Milky Way Idle Helper</div>
-            <div>
-                <button onClick={() => {
-                    setEditMode(!editMode);
-                    if (editMode) {
-                        saveSettings("view.position", position.current);
-                    }
-                }}>{editMode ? "Save" : "Move"}
-                </button>
-                <button onClick={() => {
-                    setShow(false);
-                }}>-
-                </button>
+        <div className={viewStyles.app}>
+            <div className={viewStyles.header}>
+                <div>Milky Way Idle Helper</div>
+                <div>
+                    <button onClick={() => {
+                        setEditMode(!editMode);
+                        if (editMode) {
+                            saveSettings("view.position", position.current);
+                        }
+                    }}>{editMode ? "Save" : "Move"}
+                    </button>
+                    <button onClick={() => {
+                        setShow(false);
+                    }}>-
+                    </button>
+                </div>
             </div>
-        </div>
-        <div
-            style={{
-                background: "white",
-            }}>
-            {children}
+            <div className={viewStyles.content}>
+                {children.map((child) =>
+                    <div className={viewStyles.child} key={child.id}>{child.node}</div>)}
+            </div>
         </div>
     </Rnd>
 }

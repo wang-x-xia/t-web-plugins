@@ -6,3 +6,14 @@ export interface BuffTypeDetails extends HridInfo {
     description: string
     debuffDescription: string
 }
+
+export interface CommunityBuffTypeDetails extends HridInfo {
+    description: string
+    usableInActionTypeMap: Record<string, true>
+    buff: BuffUniqueDetails
+}
+
+export interface BuffUniqueDetails {
+    uniqueHrid: string
+    typeHrid: string
+}
