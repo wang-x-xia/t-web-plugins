@@ -33,6 +33,10 @@ jobs:
         with:
           node-version: 18
       - run: npm install
+      - run: |
+          COMMIT_COUNT=$(git rev-list --count HEAD)
+          COMMIT_SHORT=$(git rev-parse --short HEAD)
+          echo "VERSION_COMMIT=$COMMIT_COUNT.$COMMIT_SHORT" >> $GITHUB_ENV
       - run: npm run mwi
       - uses: actions/upload-pages-artifact@v3
         with:
