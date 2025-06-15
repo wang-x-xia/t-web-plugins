@@ -34,9 +34,9 @@ jobs:
           node-version: 18
       - run: npm install
       - run: |
-          DATE=$(date "+%Y-%m-%d")
-          COMMIT_SHORT=$(git rev-parse --short HEAD)
-          echo "VERSION_COMMIT=$DATE_$COMMIT_SHORT" >> $GITHUB_ENV
+          DATE_PART=$(date "+%Y-%m-%d")
+          COMMIT_PART=$(git rev-parse --short HEAD)
+          echo "VERSION_COMMIT=${DATE_PART}_${COMMIT_PART}" >> $GITHUB_ENV
       - run: npm run mwi
       - uses: actions/upload-pages-artifact@v3
         with:
