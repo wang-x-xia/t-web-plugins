@@ -1,14 +1,16 @@
 import {useEffect, useState} from "react";
 import {log} from "../shared/log";
+import {type EventDefine, publishEvent, registerAnonymousHandler, unregisterCallback} from "../shared/mq";
+
+
+const SettingUpdate: EventDefine<{ setting: string, value: any }> = {
+    type: "setting-update"
+}
 
 export function saveSettings(name: string, settings: any) {
     log("save-settings", {name, settings})
     GM_setValue(name, JSON.stringify(settings));
-    for (const hook of updateHooks) {
-        if (hook.setting === name) {
-            hook.callback(settings);
-        }
-    }
+    publishEvent(SettingUpdate, {setting: name, value: settings});
 }
 
 export function loadSettings<T>(name: string, default_value: T): T {
@@ -24,17 +26,15 @@ interface SettingUpdateHook {
     callback: (value: any) => void;
 }
 
-const updateHooks: SettingUpdateHook[] = [];
-
 export function registerSettingsUpdateHook(cb: SettingUpdateHook) {
     log("register-settings-update-hook", {cb})
-    updateHooks.push(cb);
-    return () => {
-        const index = updateHooks.indexOf(cb);
-        if (index > -1) {
-            log("unregister-settings-update-hook", {cb})
-            updateHooks.splice(index, 1);
+    const id = registerAnonymousHandler([SettingUpdate], ({setting, value}) => {
+        if (setting === cb.setting) {
+            cb.callback(value);
         }
+    })
+    return () => {
+        unregisterCallback(id);
     }
 }
 

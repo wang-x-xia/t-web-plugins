@@ -1,16 +1,17 @@
 import * as React from "react";
+import {registerHandler} from "../../shared/mq";
 import type {LootLog} from "../api/loot-type";
 import {ItemTable, prepareBuyItems, prepareSellItems} from "../component/item-table";
 import {ShowNumber} from "../component/number";
 import {getActionInputs, getActionName} from "../engine/action";
 import {resolveItemHrid} from "../engine/hrid";
 import {getLootLog} from "../engine/loot";
-import {LifecycleEvent, registerLifecycle} from "../lifecycle";
+import {LootLogUpdatedEvent} from "../lifecycle";
 import {saveSettings, useSettings} from "../settings";
 import {AddView} from "../view";
 
 export function lootTrackerPlugin() {
-    registerLifecycle("character-loaded", [LifecycleEvent.LootLogUpdated], () => {
+    registerHandler("character-loaded", [LootLogUpdatedEvent], () => {
         AddView({
             id: "loot-tracker",
             name: "Loot Tracker",

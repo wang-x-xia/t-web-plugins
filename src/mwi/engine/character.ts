@@ -1,7 +1,8 @@
 import {log} from "../../shared/log";
+import {publishEvent} from "../../shared/mq";
 import type {CharacterSkill} from "../api/character-type";
 import type {InitCharacterData} from "../api/message-type";
-import {LifecycleEvent, triggerLifecycleEvent} from "../lifecycle";
+import {CharacterLoadedEvent} from "../lifecycle";
 import {AllActionType, type AnyActionType} from "./action";
 import type {Buff} from "./buff";
 import type {EngineCharacter} from "./engine-type";
@@ -24,7 +25,7 @@ export function initCharacterData(data: InitCharacterData) {
         ...initSkill(data),
     }
     log("character-initialized", {"character": character});
-    triggerLifecycleEvent(LifecycleEvent.CharacterLoaded);
+    publishEvent(CharacterLoadedEvent, null);
 }
 
 

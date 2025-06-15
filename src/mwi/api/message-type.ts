@@ -1,4 +1,4 @@
-import type {ActionCategoryDetails, ActionDetails, DropInfo} from "./action-type";
+import type {ActionCategoryDetails, ActionData, ActionDetails, DropInfo} from "./action-type";
 import type {BuffTypeDetails, CommunityBuffTypeDetails} from "./buff-type";
 import type {
     Buff,
@@ -103,4 +103,13 @@ export interface InitCharacterData {
 export interface LootLogData {
     type: "loot_log_updated"
     lootLog: LootLog[],
+}
+
+export interface ActionCompletedData {
+    type: "action_completed"
+    endCharacterAction: ActionData
+    endCharacterItems: CharacterItem[]
+    endCharacterAbilities: CharacterAbility[] | null
+    endCharacterSkills: CharacterSkill[] | null
+    endCharacterQuests: CharacterQuest[] | null
 }
