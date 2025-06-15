@@ -1,4 +1,5 @@
 import type {HridInfo} from "../api/common-type";
+import {getClientData} from "./client";
 import type {DropItem} from "./drop";
 
 
@@ -34,4 +35,9 @@ export interface CollectAction extends HridInfo {
     baseTimeCost: number
     experienceGain: number
     dropTable: DropItem[]
+}
+
+
+export function getActionName(actionHrid: string): string {
+    return getClientData().actionDetailMap[actionHrid]?.name ?? actionHrid;
 }

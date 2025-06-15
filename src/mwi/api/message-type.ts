@@ -28,6 +28,7 @@ import type {HridInfo} from "./common-type";
 import type {EquipmentTypeDetails} from "./equirement-type";
 import type {HouseRoomDetails} from "./house-type";
 import type {ItemCategoryDetails, ItemDetails, ItemLocationDetails} from "./item-type";
+import type {LootLog} from "./loot-type";
 import type {SkillDetails} from "./skill-type";
 import type {RandomTaskTypeDetails, ShopItemDetails} from "./task-type";
 
@@ -96,4 +97,10 @@ export interface InitCharacterData {
     houseActionTypeBuffsMap: Record<string, Buff[]>
     consumableActionTypeBuffsMap: Record<string, Buff[]>
     equipmentActionTypeBuffsMap: Record<string, Buff[]>
+}
+
+
+export interface LootLogData {
+    type: "loot_log_updated"
+    lootLog: LootLog[],
 }

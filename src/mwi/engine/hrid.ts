@@ -28,3 +28,19 @@ export function getBuffUniqueHrid(buffUnique: BuffSource): string {
 export function getBuffSourceByHrid(hrid: string): BuffSource | null {
     return Object.values(BuffSource).find((buffSource) => getBuffUniqueHrid(buffSource) === hrid) || null;
 }
+
+export function resolveItemHrid(itemHrid: string): { hrid: string, enhancementLevel: number } {
+    try {
+        const [hrid, _, enhancementLevel] = itemHrid.split(":")
+        return {
+            hrid,
+            enhancementLevel: Number(enhancementLevel),
+        }
+    } catch (e) {
+        console.error(e);
+        return {
+            hrid: itemHrid,
+            enhancementLevel: 0,
+        }
+    }
+}

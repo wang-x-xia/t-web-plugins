@@ -22,18 +22,29 @@ export function getMarketData() {
 }
 
 export function getSellPriceByHrid(hrid: string, enhancementLevel: number = 0): number {
+    return getPriceByHrid(hrid, "b", enhancementLevel);
+}
+
+
+export function getBuyPriceByHrid(hrid: string, enhancementLevel: number = 0): number {
+    return getPriceByHrid(hrid, "a", enhancementLevel);
+}
+
+
+function getPriceByHrid(hrid: string, field: "a" | "b", enhancementLevel: number = 0,): number {
     if (getMarketData().marketData[hrid] === undefined) {
         if (isItemOpenable(hrid)) {
             const openableItem = getOpenableItem(hrid)!;
             const otherSellAmount = Object.entries(openableItem.drops).reduce((acc, [dropHrid, dropCount]) => acc +
-                getSellPriceByHrid(dropHrid) * dropCount, 0);
+                getPriceByHrid(dropHrid, field) * dropCount, 0);
             // The other sell amount is the remaining part except self-drop
             return otherSellAmount / (1 - openableItem.selfDrop);
         }
         return 0;
     }
-    return getMarketData().marketData[hrid][enhancementLevel.toString()].b;
+    return getMarketData().marketData[hrid][enhancementLevel.toString()][field];
 }
+
 
 export async function setupMarketData() {
     if (GM_getValue("marketdata", false)) {

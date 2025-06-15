@@ -1,6 +1,7 @@
 import * as React from "react";
-import {ShowNumber, ShowPercent} from "./component/number";
-import {type CollectAction, CollectActionType} from "./engine/action";
+import {type ItemRow, ItemTable, prepareSellItems} from "../component/item-table";
+import {ShowNumber, ShowPercent} from "../component/number";
+import {type CollectAction, CollectActionType} from "../engine/action";
 import {
     type Buff,
     CollectBuffType,
@@ -10,14 +11,12 @@ import {
     getRareFindAfterBuff,
     getSumOfBuff,
     getTimeCostAfterBuff
-} from "./engine/buff";
-import {currentCharacter} from "./engine/character";
-import {getBuffSourceName, getCollectActions} from "./engine/client";
-import {DropType} from "./engine/drop";
-import {getItemName} from "./engine/item";
-import {getSellPriceByHrid} from "./engine/market";
-import {LifecycleEvent, registerLifecycle} from "./lifecycle";
-import {AddView} from "./view";
+} from "../engine/buff";
+import {currentCharacter} from "../engine/character";
+import {getBuffSourceName, getCollectActions} from "../engine/client";
+import {DropType} from "../engine/drop";
+import {LifecycleEvent, registerLifecycle} from "../lifecycle";
+import {AddView} from "../view";
 
 export function foragingPlugin() {
     registerLifecycle("foraging-plugin", [LifecycleEvent.CharacterLoaded], () => {
@@ -32,7 +31,7 @@ export function foragingPlugin() {
 export interface ActionRow {
     action: CollectAction
     totalIncome: number
-    dropItemRows: DropItemRow[]
+    dropItemRows: ItemRow[]
 }
 
 
@@ -43,7 +42,7 @@ export function ShowForaging() {
     const buffs = character.buffs.filter(b => b.action === CollectActionType.Foraging);
     const actionRows: ActionRow[] = getCollectActions(CollectActionType.Foraging)
         .map(action => {
-            const dropItemRows = action.dropTable.map((item) => {
+            const inputs = action.dropTable.map((item) => {
                 let count = item.dropRate
                     * (3600 / getTimeCostAfterBuff(action))
                     * (item.maxCount + item.minCount) / 2
@@ -58,24 +57,13 @@ export function ShowForaging() {
                         count = count * getRareFindAfterBuff(action);
                         break;
                 }
-                const price = getSellPriceByHrid(item.itemHrid);
-                const income = count * price;
                 return {
-                    name: getItemName(item.itemHrid),
+                    hrid: item.itemHrid,
                     count: count,
-                    price: price,
-                    percent: 0,
-                    income: income,
                 }
             })
-            const totalIncome = dropItemRows.reduce((acc, row) => acc + row.income, 0);
-            dropItemRows.forEach((row) => row.percent = row.income / totalIncome);
-
-            return {
-                action: action,
-                totalIncome,
-                dropItemRows,
-            }
+            const {total, items} = prepareSellItems(inputs)
+            return {action, totalIncome: total, dropItemRows: items,}
         })
         .sort((a, b) => b.totalIncome - a.totalIncome);
 
@@ -133,15 +121,7 @@ export function ShowForaging() {
     </div>
 }
 
-interface DropItemRow {
-    name: string,
-    count: number,
-    price: number,
-    income: number,
-    percent: number,
-}
-
-export function ShowDropTable({rows, expand: allExpand}: { rows: DropItemRow[], expand: boolean }) {
+export function ShowDropTable({rows, expand: allExpand}: { rows: ItemRow[], expand: boolean }) {
     const [expand, setExpand] = React.useState(allExpand);
 
     if (!expand && !allExpand) {
@@ -150,26 +130,7 @@ export function ShowDropTable({rows, expand: allExpand}: { rows: DropItemRow[], 
 
     return <>
         {!allExpand && <button onClick={() => setExpand(!expand)}>-</button>}
-        <table>
-            <thead>
-            <tr>
-                <th>Name</th>
-                <th>Count/h</th>
-                <th>Price</th>
-                <th>Income/h</th>
-                <th>Radio</th>
-            </tr>
-            </thead>
-            <tbody>
-            {rows.map((row) => <tr key={row.name}>
-                <td>{row.name}</td>
-                <td><ShowNumber value={row.count}/></td>
-                <td><ShowNumber value={row.price}/></td>
-                <td><ShowNumber value={row.income}/></td>
-                <td><ShowPercent value={row.percent}/></td>
-            </tr>)}
-            </tbody>
-        </table>
+        <ItemTable items={rows}/>
     </>
 }
 

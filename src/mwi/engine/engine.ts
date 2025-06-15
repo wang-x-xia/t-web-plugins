@@ -1,6 +1,7 @@
 import {log} from "../../shared/log";
 import {initCharacterData} from "./character";
 import {initClientData} from "./client";
+import {updateLootLog} from "./loot";
 
 export function setupEngineHook() {
     unsafeWindow.WebSocket = new Proxy(WebSocket, {
@@ -36,6 +37,9 @@ function processMessage(data: any) {
             break;
         case "init_client_data":
             initClientData(data);
+            break;
+        case "loot_log_updated":
+            updateLootLog(data);
             break;
     }
 }

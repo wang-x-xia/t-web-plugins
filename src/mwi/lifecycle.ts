@@ -2,6 +2,7 @@ import {log} from "../shared/log";
 
 export enum LifecycleEvent {
     CharacterLoaded = "character-loaded",
+    LootLogUpdated = "loot-log-updated"
 }
 
 interface NamedCallback {

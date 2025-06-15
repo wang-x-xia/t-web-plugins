@@ -45,11 +45,13 @@ function App() {
 
     useEffect(() => {
         addView = (child) => {
-            if (children.find((c) => c.id === child.id)) {
-                warn("duplicate-view", {child});
-                return;
-            }
-            setChildren([...children, child]);
+            setChildren(previous => {
+                if (previous.find((c) => c.id === child.id)) {
+                    warn("duplicate-view", {child});
+                    return previous;
+                }
+                return [...previous, child]
+            });
         };
         return () => {
             addView = undefined;
