@@ -2,8 +2,7 @@ import * as React from "react";
 import type {LootLog} from "../api/loot-type";
 import {ItemTable, prepareBuyItems, prepareSellItems} from "../component/item-table";
 import {ShowNumber} from "../component/number";
-import {getActionName} from "../engine/action";
-import {getClientData} from "../engine/client";
+import {getActionInputs, getActionName} from "../engine/action";
 import {resolveItemHrid} from "../engine/hrid";
 import {getLootLog} from "../engine/loot";
 import {LifecycleEvent, registerLifecycle} from "../lifecycle";
@@ -44,9 +43,9 @@ function ShowLootLog({log}: { log: LootLog }) {
     const {total: income, items: drops} = prepareSellItems(Object.entries(log.drops)
         .map(([hridHash, count]) => ({...resolveItemHrid(hridHash), count})))
 
-    const actionInputs = getClientData().actionDetailMap[log.actionHrid]?.inputItems ?? []
-    const {total: spending, items: inputs} = prepareBuyItems(actionInputs
-        .map(item => ({hrid: item.itemHrid, count: item.count * log.actionCount})));
+    const {total: spending, items: inputs} = prepareBuyItems(
+        getActionInputs(log.actionHrid, log.primaryItemHash, log.secondaryItemHash)
+            .map((item) => ({...item, count: item.count * log.actionCount,})));
 
     const date = new Date(Date.parse(log.startTime));
 

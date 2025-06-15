@@ -32,6 +32,10 @@ export function getBuyPriceByHrid(hrid: string, enhancementLevel: number = 0): n
 
 
 function getPriceByHrid(hrid: string, field: "a" | "b", enhancementLevel: number = 0,): number {
+    if (hrid === "/items/coin") {
+        // Coin is always 1
+        return 1;
+    }
     if (getMarketData().marketData[hrid] === undefined) {
         if (isItemOpenable(hrid)) {
             const openableItem = getOpenableItem(hrid)!;
