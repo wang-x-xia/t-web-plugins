@@ -1,5 +1,6 @@
+import type {DropInfo} from "./action-type";
 import type {BuffUniqueDetails} from "./buff-type";
-import type {HridInfo} from "./common-type";
+import type {HridInfo, ItemCount} from "./common-type";
 
 export interface ItemDetails extends HridInfo {
     description: string
@@ -12,6 +13,13 @@ export interface ItemDetails extends HridInfo {
         cooldownDuration: number
         usableInActionTypeMap: Record<string, true>
         buffs: BuffUniqueDetails[] | null,
+    }
+    alchemyDetail?: {
+        bulkMultiplier: number
+        isCoinifiable: true
+        decomposeItems: ItemCount[]
+        transmuteSuccessRate: number
+        transmuteDropTable: DropInfo[]
     }
 
     [key: string]: any

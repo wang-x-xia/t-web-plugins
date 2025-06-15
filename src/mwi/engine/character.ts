@@ -5,7 +5,7 @@ import {LifecycleEvent, triggerLifecycleEvent} from "../lifecycle";
 import {AllActionType, type AnyActionType} from "./action";
 import type {Buff} from "./buff";
 import type {EngineCharacter} from "./engine-type";
-import {getActionByHrid, getBuffSourceByHrid, getBuffTypeByHrid, getSkillHrid} from "./hrid";
+import {getActionTypeByTypeHrid, getBuffSourceByHrid, getBuffTypeByHrid, getSkillHrid} from "./hrid";
 
 let character: EngineCharacter;
 
@@ -31,7 +31,7 @@ export function initCharacterData(data: InitCharacterData) {
 export function initBuffs(data: InitCharacterData): { buffs: Buff[] } {
     const buffs: Buff[] = [data.mooPassActionTypeBuffsMap, data.communityActionTypeBuffsMap, data.houseActionTypeBuffsMap, data.consumableActionTypeBuffsMap, data.equipmentActionTypeBuffsMap]
         .flatMap((buffMap) => Object.entries(buffMap).flatMap(([key, value]) => (value || []).map<Buff | null>((buff) => {
-            const action = getActionByHrid(key);
+            const action = getActionTypeByTypeHrid(key);
             const type = getBuffTypeByHrid(buff.typeHrid);
             const source = getBuffSourceByHrid(buff.uniqueHrid);
             if (!action || !type || !source) {
