@@ -2,7 +2,7 @@ import {log} from "../../shared/log";
 import {publishEvent} from "../../shared/mq";
 import type {ActionCompletedData} from "../api/message-type";
 import {ActionCompleteEvent} from "../lifecycle";
-import {initCharacterData} from "./character";
+import {initCharacterData, updateCurrentActionData} from "./character";
 import {initClientData} from "./client";
 import {initInventory, updateInventory} from "./inventory";
 import {updateLootLog} from "./loot";
@@ -53,10 +53,11 @@ function processMessage(data: any) {
 }
 
 function processActionComplete(data: ActionCompletedData) {
+    const count = updateCurrentActionData(data.endCharacterAction);
     const {added, removed} = updateInventory(data.endCharacterItems ?? []);
     publishEvent(ActionCompleteEvent, {
         hrid: data.endCharacterAction.actionHrid,
         updatedAt: data.endCharacterAction.updatedAt,
-        added, removed,
+        added, removed, count,
     });
 }

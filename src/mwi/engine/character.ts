@@ -1,5 +1,6 @@
 import {log} from "../../shared/log";
 import {publishEvent} from "../../shared/mq";
+import type {ActionData} from "../api/action-type";
 import type {CharacterSkill} from "../api/character-type";
 import type {InitCharacterData} from "../api/message-type";
 import {CharacterLoadedEvent} from "../lifecycle";
@@ -64,4 +65,15 @@ export function initSkill(data: InitCharacterData): { skills: Record<AnyActionTy
     return {
         skills,
     }
+}
+
+let currentActionData: ActionData | null = null;
+
+export function updateCurrentActionData(newActionData: ActionData): number {
+    const previousAction = currentActionData;
+    currentActionData = newActionData;
+    if (previousAction?.actionHrid === newActionData.actionHrid) {
+        return newActionData.currentCount - previousAction.currentCount;
+    }
+    return 0;
 }

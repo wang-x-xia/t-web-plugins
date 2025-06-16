@@ -13,6 +13,7 @@ export const LootLogUpdatedEvent: EventDefine<null> = {
 
 export interface ActionCompleteEventData {
     hrid: string,
+    count: number,
     updatedAt: string,
     added: ItemCount[],
     removed: ItemCount[]

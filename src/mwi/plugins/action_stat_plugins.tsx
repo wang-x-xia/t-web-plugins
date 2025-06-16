@@ -26,7 +26,7 @@ function ShowActionStat() {
         return <>No Action</>;
     }
 
-    const groupedAction = events.reduce((map, event) => {
+    const groupedAction = events.filter(it => it.count).reduce((map, event) => {
         const action = getActionName(event.hrid);
         if (action in map) {
             map[action].push(event);
@@ -40,115 +40,153 @@ function ShowActionStat() {
         <thead>
         <tr>
             <th>Action</th>
-            <th>ItemChanges</th>
+            <th>Efficiency</th>
+            <th>Item Changes</th>
         </tr>
         </thead>
         <tbody>
         {Object.entries(groupedAction).map(([hrid, events]) => <tr key={hrid}>
             <th>{getActionName(hrid)}</th>
+            <ShowEfficiencyStat events={events}/>
             <ShowEventStats events={events}/>
         </tr>)}
         </tbody>
     </table>
 }
 
+export function ShowEfficiencyStat({events}: { events: ActionCompleteEventData[] }) {
+    const rows: { count: number, times: number, timesPercent: number, action: number, actionPercent: number }[] = []
+    events.forEach(it => {
+        let row = rows.find(row => row.count === it.count)
+        if (!row) {
+            row = {count: it.count, times: 0, timesPercent: 0, action: 0, actionPercent: 0}
+            rows.push(row)
+        }
+        row.times++
+        row.action += it.count
+    })
+    rows.sort((a, b) => a.count - b.count)
+    const total = rows.reduce((sum, it) => sum + it.action, 0)
+    rows.forEach(it => it.actionPercent = it.action / total)
+    rows.forEach(it => it.timesPercent = it.times / events.length)
+    return <td>
+        <table>
+            <thead>
+            <tr>
+                <th>Count</th>
+                <th>Times</th>
+                <th>%</th>
+                <th>Actions</th>
+                <th>%</th>
+            </tr>
+            </thead>
+            <tbody>
+            {rows.map(it => <tr key={it.count}>
+                <th>{it.count}</th>
+                <td><ShowNumber value={it.times}/></td>
+                <td><ShowPercent value={it.timesPercent}/></td>
+                <td><ShowNumber value={it.action}/></td>
+                <td><ShowPercent value={it.actionPercent}/></td>
+            </tr>)}
+            </tbody>
+            <tfoot>
+            <tr>
+                <th>Total</th>
+                <th><ShowNumber value={events.length}/></th>
+                <th></th>
+                <th><ShowNumber value={total}/></th>
+                <th></th>
+            </tr>
+            <tr>
+                <th colSpan={3}>Efficiency</th>
+                <th><ShowNumber value={total / events.length}/></th>
+                <th></th>
+            </tr>
+            </tfoot>
+        </table>
+    </td>
+}
 
-export function ShowEventStats({
-                                   events
-                               }: {
-    events: ActionCompleteEventData[]
-}) {
+export function ShowEventStats({events}: { events: ActionCompleteEventData[] }) {
     const items = uniqueStrings(events.flatMap(it => [...it.added, ...it.removed].map(it => it.itemHrid)))
-    return <>
-        <td>
-            <table>
-                <thead>
-                <tr>
-                    <th>Item</th>
-                    <th>Stats</th>
-                </tr>
-                </thead>
-                <tbody>
+    return <td>
+        <table>
+            <thead>
+            <tr>
                 {items.map(hrid =>
-                    <tr key={hrid}>
-                        <th>{getItemName(hrid)}</th>
-                        <td>
-                            <ShowItemStat itemHrid={hrid} events={events}/>
-                        </td>
-                    </tr>)}
-                </tbody>
-            </table>
-        </td>
-    </>
+                    <th key={hrid}>{getItemName(hrid)}</th>)}
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                {items.map(hrid =>
+                    <td key={hrid}>
+                        <ShowItemStat itemHrid={hrid} events={events}/>
+                    </td>
+                )}
+            </tr>
+            </tbody>
+        </table>
+    </td>
 }
 
 function ShowItemStat({itemHrid, events}: { itemHrid: string, events: ActionCompleteEventData[] }) {
-    const dist: Record<number, number> = {}
-    events.forEach(evnet => [...evnet.added, ...evnet.removed].forEach(item => {
-        if (item.itemHrid === itemHrid) {
-            dist[item.count] = (dist[item.count] ?? 0) + 1;
-        }
-    }));
-    const counts = Object.keys(dist).map(k => Number(k)).sort((a, b) => a - b);
     const rows: {
-        count: number,
+        action: number,
+        itemCount: number,
         times: number,
-        percent: number,
-        percentOfAll: number,
+        timesPercent: number,
         subtotal: number,
-        subtotalPercent: number,
-    }[] = counts.map(count => ({
-        count,
-        times: dist[count],
-        percent: 0,
-        percentOfAll: dist[count] / events.length,
-        subtotal: count * dist[count],
-        subtotalPercent: 0,
-    }));
+    }[] = []
+    const subtotalActions: Record<number, number> = {};
+    events.forEach(event => {
+        const itemCount = [...event.added, ...event.removed].find(item => item.itemHrid === itemHrid)?.count ?? 0;
+        let row = rows.find(row => row.action === event.count && row.itemCount === itemCount)
+        if (!row) {
+            row = {
+                action: event.count,
+                itemCount: itemCount,
+                times: 0,
+                timesPercent: 0,
+                subtotal: 0,
+            };
+            rows.push(row);
+        }
+        row.times += 1;
+        subtotalActions[row.action] = (subtotalActions[row.action] ?? 0) + 1;
+    });
+    rows.forEach(row => subtotalActions[row.action] = (subtotalActions[row.action] ?? 0) + 1);
+    rows.forEach(row => row.timesPercent = row.times / subtotalActions[row.action]);
 
-    const times = rows.reduce((acc, row) => acc + row.times, 0);
+    const totalActions = events.reduce((acc, event) => acc + event.count, 0);
+
+    rows.forEach(row => row.subtotal = row.times * row.itemCount);
     const total = rows.reduce((acc, row) => acc + row.subtotal, 0);
-    rows.forEach(row => row.percent = row.times / times);
-    rows.forEach(row => row.subtotalPercent = row.subtotal / total);
 
-
+    rows.sort((a, b) => a.action - b.action || a.itemCount - b.itemCount);
     return <table>
         <thead>
         <tr>
             <th>Count</th>
             <th>Times</th>
             <th>%</th>
-            <th>%OfAll</th>
             <th>Subtotal</th>
-            <th>%</th>
         </tr>
         </thead>
         <tbody>
-        {rows.map(row => <tr key={row.count}>
-            <td><ShowNumber value={row.count}/></td>
+        {rows.map(row => <tr key={`${row.action}-${row.itemCount}`}>
+            <td><ShowNumber value={row.itemCount}/> {"/"} <ShowNumber value={row.action}/></td>
             <td><ShowNumber value={row.times}/></td>
-            <td><ShowPercent value={row.percent}/></td>
-            <td><ShowPercent value={row.percentOfAll}/></td>
+            <td><ShowPercent value={row.timesPercent}/></td>
             <td><ShowNumber value={row.subtotal}/></td>
-            <td><ShowPercent value={row.subtotalPercent}/></td>
         </tr>)}
         </tbody>
         <tfoot>
         <tr>
             <th>Avg</th>
-            <th></th>
-            <th><ShowNumber value={total / times}/></th>
-            <th><ShowNumber value={total / events.length}/></th>
-            <th></th>
-            <th></th>
-        </tr>
-        <tr>
+            <th><ShowNumber value={total / totalActions}/></th>
             <th>Total</th>
-            <th><ShowNumber value={times}/></th>
-            <th>(<ShowNumber value={events.length}/>)</th>
-            <th><ShowPercent value={times / events.length}/></th>
             <th><ShowNumber value={total}/></th>
-            <th></th>
         </tr>
         </tfoot>
     </table>
