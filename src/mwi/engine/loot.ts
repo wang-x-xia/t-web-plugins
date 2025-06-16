@@ -1,6 +1,7 @@
+import {publishEvent} from "../../shared/mq";
 import type {LootLog} from "../api/loot-type";
 import type {LootLogData} from "../api/message-type";
-import {LifecycleEvent, triggerLifecycleEvent} from "../lifecycle";
+import {LootLogUpdatedEvent} from "../lifecycle";
 
 
 let lootLog: LootLog[] | null = null;
@@ -14,5 +15,5 @@ export function getLootLog(): LootLog[] {
 
 export function updateLootLog(data: LootLogData) {
     lootLog = data.lootLog;
-    triggerLifecycleEvent(LifecycleEvent.LootLogUpdated);
+    publishEvent(LootLogUpdatedEvent, null);
 }

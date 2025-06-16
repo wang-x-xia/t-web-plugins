@@ -1,35 +1,24 @@
-import {log} from "../shared/log";
+import {type EventDefine} from "../shared/mq";
+import type {ItemCount} from "./api/common-type";
 
-export enum LifecycleEvent {
-    CharacterLoaded = "character-loaded",
-    LootLogUpdated = "loot-log-updated"
+
+export const CharacterLoadedEvent: EventDefine<null> = {
+    type: "character-loaded"
+};
+
+export const LootLogUpdatedEvent: EventDefine<null> = {
+    type: "loot-log-updated"
+};
+
+
+export interface ActionCompleteEventData {
+    hrid: string,
+    count: number,
+    updatedAt: string,
+    added: ItemCount[],
+    removed: ItemCount[]
 }
 
-interface NamedCallback {
-    name: string;
-    events: LifecycleEvent[];
-    cb: () => void;
+export const ActionCompleteEvent: EventDefine<ActionCompleteEventData> = {
+    type: "action-complete"
 }
-
-const callbacks: Record<string, NamedCallback> = {}
-
-export function registerLifecycle(name: string, events: LifecycleEvent[], cb: () => void) {
-    callbacks[name] = {name, events, cb};
-}
-
-export function unregisterLifecycle(name: string) {
-    delete callbacks[name];
-}
-
-export function triggerLifecycleEvent(event: LifecycleEvent) {
-    const callbacksForEvent = Object.values(callbacks).filter(cb => cb.events.includes(event));
-    callbacksForEvent.forEach(cb => {
-        try {
-            log("lifecycle", {"event": event, "name": cb.name});
-            cb.cb();
-        } catch (e) {
-            console.error(e);
-        }
-    });
-}
-

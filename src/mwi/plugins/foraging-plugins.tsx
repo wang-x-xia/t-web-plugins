@@ -1,4 +1,5 @@
 import * as React from "react";
+import {registerHandler} from "../../shared/mq";
 import {type ItemRow, ItemTable, prepareSellItems} from "../component/item-table";
 import {ShowNumber, ShowPercent} from "../component/number";
 import {type CollectAction, CollectActionType} from "../engine/action";
@@ -15,17 +16,17 @@ import {
 import {currentCharacter} from "../engine/character";
 import {getBuffSourceName, getCollectActions} from "../engine/client";
 import {DropType} from "../engine/drop";
-import {LifecycleEvent, registerLifecycle} from "../lifecycle";
+import {CharacterLoadedEvent} from "../lifecycle";
 import {AddView} from "../view";
 
 export function foragingPlugin() {
-    registerLifecycle("foraging-plugin", [LifecycleEvent.CharacterLoaded], () => {
+    registerHandler("foraging-plugin", [CharacterLoadedEvent], () => {
         AddView({
             id: "foraging",
             name: "Foraging",
             node: <ShowForaging/>
-        })
-    })
+        });
+    });
 }
 
 export interface ActionRow {

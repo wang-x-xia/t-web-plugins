@@ -1,6 +1,10 @@
 import {log} from "../../shared/log";
-import {initCharacterData} from "./character";
+import {publishEvent} from "../../shared/mq";
+import type {ActionCompletedData} from "../api/message-type";
+import {ActionCompleteEvent} from "../lifecycle";
+import {initCharacterData, updateCurrentActionData} from "./character";
 import {initClientData} from "./client";
+import {initInventory, updateInventory} from "./inventory";
 import {updateLootLog} from "./loot";
 
 export function setupEngineHook() {
@@ -34,6 +38,7 @@ function processMessage(data: any) {
     switch (data.type) {
         case "init_character_data":
             initCharacterData(data);
+            initInventory(data);
             break;
         case "init_client_data":
             initClientData(data);
@@ -41,5 +46,18 @@ function processMessage(data: any) {
         case "loot_log_updated":
             updateLootLog(data);
             break;
+        case "action_completed":
+            processActionComplete(data);
+            break;
     }
+}
+
+function processActionComplete(data: ActionCompletedData) {
+    const count = updateCurrentActionData(data.endCharacterAction);
+    const {added, removed} = updateInventory(data.endCharacterItems ?? []);
+    publishEvent(ActionCompleteEvent, {
+        hrid: data.endCharacterAction.actionHrid,
+        updatedAt: data.endCharacterAction.updatedAt,
+        added, removed, count,
+    });
 }

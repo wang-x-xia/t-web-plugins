@@ -1,5 +1,6 @@
+import type {OwnedByCharacter} from "./character-type";
 import type {CombatZoneInfo} from "./combat-type";
-import type {HridInfo, ItemCount} from "./common-type";
+import type {HasId, HasTime, HridInfo, ItemCount} from "./common-type";
 
 
 export interface ActionCategoryDetails extends HridInfo {
@@ -39,3 +40,18 @@ export interface DropInfo {
     minEliteTier: number
 }
 
+export interface ActionData extends HasId, HasTime, OwnedByCharacter {
+    partyID: number
+    actionHrid: string
+    hasMaxCount: boolean
+    maxCount: number
+    currentCount: number
+    wave: number
+    primaryItemHash: string
+    secondaryItemHash: string
+    enhancingMaxLevel: number
+    enhancingProtectionMinLevel: number
+    characterLoadoutID: number
+    ordinal: number
+    isDone: boolean
+}
