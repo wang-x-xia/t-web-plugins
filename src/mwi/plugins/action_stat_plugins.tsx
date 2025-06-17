@@ -155,7 +155,6 @@ function ShowItemStat({itemHrid, events}: { itemHrid: string, events: ActionComp
         row.times += 1;
         subtotalActions[row.action] = (subtotalActions[row.action] ?? 0) + 1;
     });
-    rows.forEach(row => subtotalActions[row.action] = (subtotalActions[row.action] ?? 0) + 1);
     rows.forEach(row => row.timesPercent = row.times / subtotalActions[row.action]);
 
     const totalActions = events.reduce((acc, event) => acc + event.count, 0);
