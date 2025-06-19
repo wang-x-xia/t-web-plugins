@@ -1,4 +1,5 @@
 import * as React from "react";
+import {useMemo, useState} from "react";
 import {uniqueStrings} from "../../shared/list";
 import {registerHandler} from "../../shared/mq";
 import {useRecentEvents} from "../../shared/mq-react";
@@ -6,27 +7,85 @@ import {ShowNumber, ShowPercent} from "../component/number";
 import {getActionName} from "../engine/action";
 import {getItemName} from "../engine/item";
 import {ActionCompleteEvent, type ActionCompleteEventData, CharacterLoadedEvent} from "../lifecycle";
+import {loadSettings, saveSettings, useSettings} from "../settings";
 import {AddView} from "../view";
 
 
 export function actionStatPlugin() {
+    setupEventsStore();
+
     registerHandler("action-stat-init", [CharacterLoadedEvent], () => {
         AddView({
             id: "action-stat",
             name: "Action Stat",
-            node: <ShowActionStat/>,
+            node: <>
+                <ShowStoreInfo/>
+                <ShowActionStat/>
+            </>,
         });
     });
 }
 
+
+function setupEventsStore() {
+    registerHandler("action-stat-store", [ActionCompleteEvent], (event) => {
+        if (!loadSettings("action-stat.store.enable", false)) {
+            return;
+        }
+        if (event.count === 0) {
+            return;
+        }
+        storedEvents([...getStoredEvents(), event]);
+    });
+}
+
+
+function storedEvents(events: ActionCompleteEventData[]) {
+    GM_setValue("action-stat.store", JSON.stringify(events));
+}
+
+function getStoredEvents(): ActionCompleteEventData[] {
+    return JSON.parse(GM_getValue("action-stat.store", "[]"));
+}
+
+function ShowStoreInfo() {
+    const [size, setSize] = useState(getStoredEvents().length);
+
+    const enable = useSettings("action-stat.store.enable", false);
+    return <div>
+        Action Stat store
+        <input type="checkbox" checked={enable} onChange={(e) => saveSettings("action-stat.store.enable",
+            e.target.checked)}/>
+        Stored records: <ShowNumber value={size}/>
+        <button onClick={() => setSize(getStoredEvents().length)}>Check count</button>
+        <button onClick={() => {
+            storedEvents([]);
+            setSize(0);
+        }}>Clear
+        </button>
+        <button onClick={() => exportStore()}>Save as</button>
+    </div>
+}
+
+function exportStore() {
+    const data = getStoredEvents();
+    const blob = new Blob([JSON.stringify(data)], {type: "application/json;charset=utf-8"});
+    window.open(window.URL.createObjectURL(blob));
+}
+
 function ShowActionStat() {
+    const storedEvents: ActionCompleteEventData[] = useMemo(() => getStoredEvents(), []);
+
     const events = useRecentEvents(ActionCompleteEvent)
 
-    if (events.length === 0) {
-        return <>No Action</>;
+    const validEvents = [...storedEvents, ...events].filter(it => it.count)
+    if (validEvents.length === 0) {
+        return <>
+            No Action
+        </>;
     }
 
-    const groupedAction = events.filter(it => it.count).reduce((map, event) => {
+    const groupedAction = validEvents.reduce((map, event) => {
         const action = getActionName(event.hrid);
         if (action in map) {
             map[action].push(event);
