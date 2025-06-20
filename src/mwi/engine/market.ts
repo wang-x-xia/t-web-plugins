@@ -1,7 +1,7 @@
 import {log} from "../../shared/log";
 import {getOpenableItem, isItemOpenable} from "./item";
 
-const MarketSource = "https://www.milkywayidle.com/game_data/marketplace.json"
+const MarketSource = "game_data/marketplace.json"
 
 
 export interface MarketData {
