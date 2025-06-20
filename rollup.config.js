@@ -19,6 +19,7 @@ export default {
         replace({
             // Added for React
             'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
+            '__dev_mode__': process.env.NODE_ENV === "production" ? "" : "Dev",
             '__commit__': process.env.VERSION_COMMIT ?? "dev",
             preventAssignment: true,
         }),
