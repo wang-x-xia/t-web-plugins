@@ -1,10 +1,11 @@
 import * as React from "react";
+import {Fragment, type ReactNode} from "react";
+import {ShowItem} from "../component/item";
 import {type ItemRow, ItemTable, prepareSellItems} from "../component/item-table";
 import {ShowNumber, ShowPercent} from "../component/number";
 import {type CollectAction, CollectActionType} from "../engine/action";
 import {
-    type Buff,
-    CollectBuffType,
+    buffStore,
     getBuffTypeName,
     getEfficiencyAfterBuff,
     getGatheringAfterBuff,
@@ -12,7 +13,7 @@ import {
     getSumOfBuff,
     getTimeCostAfterBuff
 } from "../engine/buff";
-import {currentCharacterStore} from "../engine/character";
+import {type Buff, BuffSource, CollectBuffType, type EquipmentBuff} from "../engine/buff-type";
 import {getBuffSourceName, getCollectActions} from "../engine/client";
 import {DropType} from "../engine/drop";
 import {CharacterLoadedEvent} from "../engine/engine-event";
@@ -40,9 +41,9 @@ export interface ActionRow {
 
 export function ShowForaging() {
     const [expandDropTable, setExpandDropTable] = React.useState(false);
-    const character = useStoreData(currentCharacterStore());
+    const buffsOrNull = useStoreData(buffStore());
 
-    const buffs = (character?.buffs ?? []).filter(b => b.action === CollectActionType.Foraging);
+    const buffs = (buffsOrNull ?? []).filter(b => b.action === CollectActionType.Foraging);
     const actionRows: ActionRow[] = getCollectActions(CollectActionType.Foraging)
         .map(action => {
             const inputs = action.dropTable.map((item) => {
@@ -72,24 +73,7 @@ export function ShowForaging() {
 
 
     return <div>
-        <table>
-            <thead>
-            <tr>
-                <th>Buff Type</th>
-                <th>Value</th>
-                <th>Source</th>
-            </tr>
-            </thead>
-            <tbody>
-            {Object.values(CollectBuffType).map((buffType) =>
-                <tr key={buffType}>
-                    <ShowBuffValue key={buffType} buffType={buffType} buffs={buffs}/>
-                </tr>)
-            }
-            </tbody>
-        </table>
-
-
+        <ShowBuffTable buffs={buffs}/>
         <table>
             <thead>
             <tr>
@@ -137,29 +121,97 @@ export function ShowDropTable({rows, expand: allExpand}: { rows: ItemRow[], expa
     </>
 }
 
-export function ShowBuffValue({buffType, buffs}: { buffType: CollectBuffType, buffs: Buff[] }) {
-    const typeBuff = buffs.filter(b => b.type === buffType);
-    const value = getSumOfBuff(buffs, buffType);
+export interface BuffRow {
+    key: string
+    cells: ReactNode[]
+}
 
-    return <>
-        <th>{getBuffTypeName(buffType)}</th>
-        <td><ShowPercent value={value}/></td>
-        <td>
-            <table>
-                <thead>
-                <tr>
-                    <th>Source</th>
-                    <th>Value</th>
-                </tr>
-                </thead>
-                <tbody>
-                {typeBuff.map(b =>
-                    <tr key={b.source}>
-                        <th>{getBuffSourceName(b.source)}</th>
-                        <td><ShowPercent value={b.flatBoost}/></td>
-                    </tr>)}
-                </tbody>
-            </table>
-        </td>
-    </>
+export function ShowBuffTable({buffs}: { buffs: Buff[] }) {
+    const buffRows: BuffRow[] = [];
+
+    Object.values(CollectBuffType).forEach((buffType) => {
+        const typeBuff = buffs.filter(b => b.type === buffType);
+        const value = getSumOfBuff(buffs, buffType);
+
+        if (typeBuff.length === 0) {
+            buffRows.push({
+                key: buffType as string,
+                cells: [
+                    <Fragment key="noBuff">
+                        <th>{getBuffTypeName(buffType)}</th>
+                        <td><ShowPercent value={value}/></td>
+                        <td colSpan={4}></td>
+                    </Fragment>
+                ],
+            });
+            return;
+        }
+        const buffTypeStartRows = buffRows.length;
+        typeBuff.forEach((buff) => {
+            const buffStartRows = buffRows.length;
+            if (buff.source === BuffSource.Equipment) {
+                const equipmentBuff = buff as EquipmentBuff;
+                equipmentBuff.equipments.forEach(equipment => {
+                    buffRows.push({
+                        key: equipment.itemHrid,
+                        cells: [
+                            <Fragment key="equipment">
+                                <th>
+                                    <ShowItem hrid={equipment.itemHrid} enhancementLevel={equipment.enhancementLevel}/>
+                                </th>
+                                <td>
+                                    <ShowPercent value={equipment.value}/>
+                                </td>
+                            </Fragment>
+                        ],
+                    })
+                })
+            }
+            const span = buffRows.length - buffStartRows;
+            if (span > 0) {
+                buffRows[buffStartRows].cells = [
+                    <Fragment key="source">
+                        <th rowSpan={span}>{getBuffSourceName(buff.source)}</th>
+                        <th rowSpan={span}><ShowPercent value={buff.value}/></th>
+                    </Fragment>,
+                    ...buffRows[buffStartRows].cells,
+                ];
+            } else {
+                buffRows.push({
+                    key: buff.source as string,
+                    cells: [
+                        <Fragment key="source">
+                            <th>{getBuffSourceName(buff.source)}</th>
+                            <td><ShowPercent value={buff.value}/></td>
+                            <td colSpan={2}></td>
+                        </Fragment>
+                    ],
+                });
+            }
+        })
+        const span = buffRows.length - buffTypeStartRows;
+        buffRows[buffTypeStartRows].cells = [
+            <Fragment key={buffType}>
+                <th rowSpan={span}>{getBuffTypeName(buffType)}</th>
+                <td rowSpan={span}><ShowPercent value={value}/></td>
+            </Fragment>,
+            ...buffRows[buffTypeStartRows].cells,
+        ];
+    })
+
+    return <table>
+        <thead>
+        <tr>
+            <th colSpan={2}>Buff Type</th>
+            <th colSpan={2}>Source</th>
+            <th colSpan={2}>Sub</th>
+        </tr>
+        </thead>
+        <tbody>
+        {buffRows.map((buffRow) =>
+            <tr key={buffRow.key}>
+                {...buffRow.cells}
+            </tr>)}
+        </tbody>
+    </table>
 }

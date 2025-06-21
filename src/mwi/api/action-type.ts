@@ -1,6 +1,6 @@
 import type {OwnedByCharacter} from "./character-type";
 import type {CombatZoneInfo} from "./combat-type";
-import type {HasId, HasTime, HridInfo, ItemCount} from "./common-type";
+import type {HasId, HasTime, HridInfo, ItemCount, LevelRequirement} from "./common-type";
 
 
 export interface ActionCategoryDetails extends HridInfo {
@@ -11,10 +11,7 @@ export interface ActionDetails extends HridInfo {
     function: string
     type: string
     category: string
-    levelRequirement: {
-        skillHrid: string,
-        level: number
-    }
+    levelRequirement: LevelRequirement
     baseTimeCost: number
     experienceGain: {
         skillHrid: string,

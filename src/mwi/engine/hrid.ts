@@ -1,5 +1,5 @@
 import {AllActionType, type AnyActionType} from "./action";
-import {AllBuffType, type AnyBuffType, BuffSource} from "./buff";
+import {AllBuffType, type AnyBuffType, BuffSource} from "./buff-type";
 
 export function getActionTypeHrid(action: AnyActionType): string {
     return `/action_types/${action}`;
