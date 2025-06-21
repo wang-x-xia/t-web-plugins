@@ -17,3 +17,8 @@ export interface ItemCount {
     itemHrid: string
     count: number
 }
+
+export interface LevelRequirement {
+    skillHrid: string
+    level: number
+}

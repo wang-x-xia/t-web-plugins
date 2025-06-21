@@ -25,7 +25,7 @@ import type {
     CombatTriggerDependencyDetails
 } from "./combat-type";
 import type {HridInfo} from "./common-type";
-import type {EquipmentTypeDetails} from "./equirement-type";
+import type {EquipmentTypeDetails} from "./equipment-type";
 import type {HouseRoomDetails} from "./house-type";
 import type {ItemCategoryDetails, ItemDetails, ItemLocationDetails} from "./item-type";
 import type {LootLog} from "./loot-type";

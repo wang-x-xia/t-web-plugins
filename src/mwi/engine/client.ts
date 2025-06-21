@@ -1,6 +1,6 @@
 import type {InitClientData} from "../api/message-type";
 import {type CollectAction, CollectActionType} from "./action";
-import {BuffSource} from "./buff";
+import {BuffSource} from "./buff-type";
 import {type DropItem, DropType} from "./drop";
 import {InitClientSubject} from "./engine-event";
 import {getActionTypeHrid, getBuffSourceByHrid} from "./hrid";

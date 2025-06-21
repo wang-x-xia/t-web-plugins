@@ -1,9 +1,9 @@
 import {useEffect, useState} from "react";
-import {Subject} from "rxjs";
+import {ReplaySubject} from "rxjs";
 
 export interface CharacterStore<T> {
     name: string
-    dataSubject: Subject<T>
+    dataSubject: ReplaySubject<T>
     data: T
 
     dataOrNull(): T | null
@@ -28,7 +28,7 @@ export function useStoreData<T>(store: CharacterStore<T>): T | null {
 class CharacterStoreImpl<T> implements CharacterStore<T> {
     readonly name: string;
     private _data: T | null = null;
-    dataSubject = new Subject<T>();
+    dataSubject = new ReplaySubject<T>(1);
 
     constructor(name: string) {
         this.name = name;
