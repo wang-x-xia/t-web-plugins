@@ -6,24 +6,18 @@ import {foragingPlugin} from "./plugins/foraging-plugins";
 import {lootTrackerPlugin} from "./plugins/loot-tracker";
 import {setupApp} from "./view";
 
-async function main() {
-    setupEngineHook();
+setupEngineHook();
 
-    window.addEventListener("load", () => {
-        setupApp();
-    });
+window.addEventListener("load", () => {
+    setupApp();
+});
 
-    await setupMarketData();
+setupMarketData().catch((e) => {
+    console.error({"log-event": "init-failed"}, e);
+}).finally(() => {
+    log("init-finished", {})
+})
 
-    foragingPlugin()
-    lootTrackerPlugin()
-    actionStatPlugin()
-}
-
-main()
-    .catch((e) => {
-        console.error({"log-event": "init-failed"}, e);
-    })
-    .finally(() => {
-        log("init-finished", {})
-    })
+foragingPlugin()
+lootTrackerPlugin()
+actionStatPlugin()
