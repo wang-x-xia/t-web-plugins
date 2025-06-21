@@ -1,5 +1,4 @@
 import * as React from "react";
-import {registerHandler} from "../../shared/mq";
 import {type ItemRow, ItemTable, prepareSellItems} from "../component/item-table";
 import {ShowNumber, ShowPercent} from "../component/number";
 import {type CollectAction, CollectActionType} from "../engine/action";
@@ -13,19 +12,22 @@ import {
     getSumOfBuff,
     getTimeCostAfterBuff
 } from "../engine/buff";
-import {currentCharacter} from "../engine/character";
+import {currentCharacterStore} from "../engine/character";
 import {getBuffSourceName, getCollectActions} from "../engine/client";
 import {DropType} from "../engine/drop";
-import {CharacterLoadedEvent} from "../lifecycle";
+import {CharacterLoadedEvent} from "../engine/engine-event";
+import {useStoreData} from "../engine/store";
 import {AddView} from "../view";
 
 export function foragingPlugin() {
-    registerHandler("foraging-plugin", [CharacterLoadedEvent], () => {
-        AddView({
-            id: "foraging",
-            name: "Foraging",
-            node: <ShowForaging/>
-        });
+    CharacterLoadedEvent.subscribe({
+        complete: () => {
+            AddView({
+                id: "foraging",
+                name: "Foraging",
+                node: <ShowForaging/>
+            });
+        },
     });
 }
 
@@ -38,9 +40,9 @@ export interface ActionRow {
 
 export function ShowForaging() {
     const [expandDropTable, setExpandDropTable] = React.useState(false);
+    const character = useStoreData(currentCharacterStore());
 
-    const character = currentCharacter();
-    const buffs = character.buffs.filter(b => b.action === CollectActionType.Foraging);
+    const buffs = (character?.buffs ?? []).filter(b => b.action === CollectActionType.Foraging);
     const actionRows: ActionRow[] = getCollectActions(CollectActionType.Foraging)
         .map(action => {
             const inputs = action.dropTable.map((item) => {

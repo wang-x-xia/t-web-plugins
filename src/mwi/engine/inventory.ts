@@ -1,11 +1,12 @@
 import type {CharacterItem} from "../api/character-type";
 import type {ItemCount} from "../api/common-type";
-import type {InitCharacterData} from "../api/message-type";
+import {InitCharacterSubject} from "./engine-event";
+import {createCharacterStore} from "./store";
 
 
-let inventory: Record<string, Record<number, number>> | null = null;
+const store = createCharacterStore<Record<string, Record<number, number>>>("inventory");
 
-export function initInventory(data: InitCharacterData) {
+InitCharacterSubject.subscribe(data => {
     const localInventory = {} as Record<string, Record<number, number>>;
     data.characterItems.forEach((item) => {
         if (item.itemLocationHrid !== "/item_locations/inventory") {
@@ -14,19 +15,11 @@ export function initInventory(data: InitCharacterData) {
         localInventory[item.itemHrid] = localInventory[item.itemHrid] ?? {}
         localInventory[item.itemHrid][item.enhancementLevel] = item.count;
     });
-    inventory = localInventory;
-}
-
-function getInventory() {
-    if (!inventory) {
-        throw new Error("Inventory not initialized");
-    }
-    return inventory;
-}
-
+    store.data = localInventory;
+});
 
 export function updateInventory(data: CharacterItem[]): { added: ItemCount[], removed: ItemCount[] } {
-    const inventory = getInventory();
+    const inventory = store.data;
     const diffs = data
         .filter(item => item.itemLocationHrid === "/item_locations/inventory")
         .map((item) => {
@@ -40,12 +33,4 @@ export function updateInventory(data: CharacterItem[]): { added: ItemCount[], re
         added: diffs.filter(diff => diff.count > 0),
         removed: diffs.filter(diff => diff.count < 0),
     }
-}
-
-
-export function getItemFromInventory(hrid: string, enhancementLevel: number = 0): number {
-    if (!inventory) {
-        throw new Error("Inventory not initialized");
-    }
-    return inventory[hrid]?.[enhancementLevel] ?? 0;
 }

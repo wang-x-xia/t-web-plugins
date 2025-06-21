@@ -2,6 +2,7 @@ import type {InitClientData} from "../api/message-type";
 import {type CollectAction, CollectActionType} from "./action";
 import {BuffSource} from "./buff";
 import {type DropItem, DropType} from "./drop";
+import {InitClientSubject} from "./engine-event";
 import {getActionTypeHrid, getBuffSourceByHrid} from "./hrid";
 
 let clientData: InitClientData | null = null;
@@ -13,12 +14,11 @@ export function getClientData(): InitClientData {
     return clientData;
 }
 
-
-export function initClientData(data: InitClientData) {
+InitClientSubject.subscribe((data: InitClientData) => {
     clientData = data;
     collectActions = initCollectActions(data);
     buffSourceNames = initBuffSourceNames(data);
-}
+});
 
 let collectActions: Record<CollectActionType, CollectAction[]> | null = null;
 

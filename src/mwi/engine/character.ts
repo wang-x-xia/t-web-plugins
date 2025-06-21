@@ -1,34 +1,34 @@
 import {log} from "../../shared/log";
-import {publishEvent} from "../../shared/mq";
 import type {ActionData} from "../api/action-type";
 import type {CharacterSkill} from "../api/character-type";
 import type {InitCharacterData} from "../api/message-type";
-import {CharacterLoadedEvent} from "../lifecycle";
 import {AllActionType, type AnyActionType} from "./action";
 import type {Buff} from "./buff";
+import {CharacterLoadedEvent, InitCharacterSubject} from "./engine-event";
 import type {EngineCharacter} from "./engine-type";
 import {getActionTypeByTypeHrid, getBuffSourceByHrid, getBuffTypeByHrid, getSkillHrid} from "./hrid";
+import {createCharacterStore} from "./store";
 
-let character: EngineCharacter;
+const store = createCharacterStore<EngineCharacter>("engine-character");
 
-export function currentCharacter(): EngineCharacter {
-    if (!character) {
-        throw new Error("Character not initialized");
-    }
-    return character;
+export function currentCharacterStore() {
+    return store;
 }
 
-export function initCharacterData(data: InitCharacterData) {
-    character = {
+export function currentCharacter(): EngineCharacter {
+    return store.data;
+}
+
+InitCharacterSubject.subscribe((data: InitCharacterData) => {
+    store.data = {
         drinkSlots: data.actionTypeDrinkSlotsMap,
         noncombatStats: data.noncombatStats,
         ...initBuffs(data),
         ...initSkill(data),
     }
-    log("character-initialized", {"character": character});
-    publishEvent(CharacterLoadedEvent, null);
-}
-
+    log("character-initialized", {"character": store.data});
+    CharacterLoadedEvent.complete();
+});
 
 export function initBuffs(data: InitCharacterData): { buffs: Buff[] } {
     const buffs: Buff[] = [data.mooPassActionTypeBuffsMap, data.communityActionTypeBuffsMap, data.houseActionTypeBuffsMap, data.consumableActionTypeBuffsMap, data.equipmentActionTypeBuffsMap]
