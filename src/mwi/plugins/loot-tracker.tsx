@@ -1,29 +1,31 @@
 import * as React from "react";
-import {registerHandler} from "../../shared/mq";
+import {useLatestValue} from "../../shared/rxjs-react";
 import type {LootLog} from "../api/loot-type";
 import {ItemTable, prepareBuyItems, prepareSellItems} from "../component/item-table";
 import {ShowNumber} from "../component/number";
 import {getActionInputs, getActionName} from "../engine/action";
+import {LootLogSubject} from "../engine/engine-event";
 import {resolveItemHrid} from "../engine/hrid";
-import {getLootLog} from "../engine/loot";
-import {LootLogUpdatedEvent} from "../lifecycle";
+
 import {saveSettings, useSettings} from "../settings";
 import {AddView} from "../view";
 
 export function lootTrackerPlugin() {
-    registerHandler("character-loaded", [LootLogUpdatedEvent], () => {
+    const subscription = LootLogSubject.subscribe(({lootLog}) => {
         AddView({
             id: "loot-tracker",
             name: "Loot Tracker",
             node: <ShowLootTracker/>
         });
+        subscription.unsubscribe();
     });
 }
 
 function ShowLootTracker() {
     const mode = useSettings<"all" | "hour">("loot-tracker.mode", "hour");
+    const event = useLatestValue(LootLogSubject);
 
-    const lootLogs = [...getLootLog()].reverse();
+    const lootLogs = [...(event?.lootLog ?? [])].reverse();
     return <>
         <div>
             Current: {mode === "hour" ? "Hourly Data" : "Total"}

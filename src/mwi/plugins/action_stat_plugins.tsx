@@ -1,34 +1,35 @@
 import * as React from "react";
 import {useMemo, useState} from "react";
 import {uniqueStrings} from "../../shared/list";
-import {registerHandler} from "../../shared/mq";
-import {useRecentEvents} from "../../shared/mq-react";
+import {useRecentValues} from "../../shared/rxjs-react";
 import {ShowNumber, ShowPercent} from "../component/number";
 import {getActionName} from "../engine/action";
+
+import {ActionCompleteEvent, type ActionCompleteEventData, CharacterLoadedEvent} from "../engine/engine-event";
 import {getItemName} from "../engine/item";
-import {ActionCompleteEvent, type ActionCompleteEventData, CharacterLoadedEvent} from "../lifecycle";
 import {loadSettings, saveSettings, useSettings} from "../settings";
 import {AddView} from "../view";
 
 
 export function actionStatPlugin() {
     setupEventsStore();
-
-    registerHandler("action-stat-init", [CharacterLoadedEvent], () => {
-        AddView({
-            id: "action-stat",
-            name: "Action Stat",
-            node: <>
-                <ShowStoreInfo/>
-                <ShowActionStat/>
-            </>,
-        });
+    CharacterLoadedEvent.subscribe({
+        complete: () => {
+            AddView({
+                id: "action-stat",
+                name: "Action Stat",
+                node: <>
+                    <ShowStoreInfo/>
+                    <ShowActionStat/>
+                </>,
+            });
+        },
     });
 }
 
 
 function setupEventsStore() {
-    registerHandler("action-stat-store", [ActionCompleteEvent], (event) => {
+    ActionCompleteEvent.subscribe((event) => {
         if (!loadSettings("action-stat.store.enable", false)) {
             return;
         }
@@ -76,7 +77,7 @@ function exportStore() {
 function ShowActionStat() {
     const storedEvents: ActionCompleteEventData[] = useMemo(() => getStoredEvents(), []);
 
-    const events = useRecentEvents(ActionCompleteEvent)
+    const events = useRecentValues(ActionCompleteEvent)
 
     const validEvents = [...storedEvents, ...events].filter(it => it.count)
     if (validEvents.length === 0) {

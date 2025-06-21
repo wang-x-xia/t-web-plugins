@@ -1,11 +1,8 @@
 import {log} from "../../shared/log";
-import {publishEvent} from "../../shared/mq";
 import type {ActionCompletedData} from "../api/message-type";
-import {ActionCompleteEvent} from "../lifecycle";
-import {initCharacterData, updateCurrentActionData} from "./character";
-import {initClientData} from "./client";
-import {initInventory, updateInventory} from "./inventory";
-import {updateLootLog} from "./loot";
+import {updateCurrentActionData} from "./character";
+import {ActionCompleteEvent, InitCharacterSubject, InitClientSubject, LootLogSubject} from "./engine-event";
+import {updateInventory} from "./inventory";
 
 export function setupEngineHook() {
     unsafeWindow.WebSocket = new Proxy(WebSocket, {
@@ -37,14 +34,13 @@ function processMessage(data: any) {
     log("handle-message", {"type": data.type, "data": data});
     switch (data.type) {
         case "init_character_data":
-            initCharacterData(data);
-            initInventory(data);
+            InitCharacterSubject.next(data);
             break;
         case "init_client_data":
-            initClientData(data);
+            InitClientSubject.next(data);
             break;
         case "loot_log_updated":
-            updateLootLog(data);
+            LootLogSubject.next(data);
             break;
         case "action_completed":
             processActionComplete(data);
@@ -55,7 +51,7 @@ function processMessage(data: any) {
 function processActionComplete(data: ActionCompletedData) {
     const count = updateCurrentActionData(data.endCharacterAction);
     const {added, removed} = updateInventory(data.endCharacterItems ?? []);
-    publishEvent(ActionCompleteEvent, {
+    ActionCompleteEvent.next({
         hrid: data.endCharacterAction.actionHrid,
         updatedAt: data.endCharacterAction.updatedAt,
         added, removed, count,
