@@ -1,5 +1,6 @@
 import * as React from "react";
 import {Fragment, type ReactNode} from "react";
+import {log} from "../../shared/log";
 import {ShowItem} from "../component/item";
 import {type ItemRow, ItemTable, prepareSellItems} from "../component/item-table";
 import {ShowNumber, ShowPercent} from "../component/number";
@@ -16,12 +17,12 @@ import {
 import {type Buff, BuffSource, CollectBuffType, type EquipmentBuff} from "../engine/buff-type";
 import {getBuffSourceName, getCollectActions} from "../engine/client";
 import {DropType} from "../engine/drop";
-import {CharacterLoadedEvent} from "../engine/engine-event";
+import {AllLoadedEvent} from "../engine/engine-event";
 import {useStoreData} from "../engine/store";
 import {AddView} from "../view";
 
 export function foragingPlugin() {
-    CharacterLoadedEvent.subscribe({
+    AllLoadedEvent.subscribe({
         complete: () => {
             AddView({
                 id: "foraging",

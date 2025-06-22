@@ -2,7 +2,7 @@ import * as React from "react";
 import {useEffect, useRef, useState} from "react";
 import {createRoot} from "react-dom/client";
 import {Rnd} from "react-rnd";
-import {warn} from "../shared/log";
+import {log, warn} from "../shared/log";
 import viewStyles from "./component/view.module.css";
 import {loadSettings, saveSettings, useSettings} from "./settings";
 
@@ -23,6 +23,7 @@ const childrenBefore: ChildView[] = []
 let addView: ((child: ChildView) => void) | undefined = undefined
 
 export function AddView(child: ChildView) {
+    log("add-view", {child});
     if (addView) {
         addView(child);
     } else if (childrenBefore.find((c) => c.id === child.id)) {

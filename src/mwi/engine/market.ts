@@ -1,4 +1,5 @@
 import {log} from "../../shared/log";
+import {MarketLoadedEvent} from "./engine-event";
 import {getOpenableItem, isItemOpenable} from "./item";
 
 const MarketSource = "game_data/marketplace.json"
@@ -53,6 +54,7 @@ function getPriceByHrid(hrid: string, field: "a" | "b", enhancementLevel: number
 export async function setupMarketData() {
     if (GM_getValue("marketdata", false)) {
         markerData = JSON.parse(GM_getValue("marketdata", "{}") as string) as MarketData;
+        MarketLoadedEvent.complete();
         if (Date.now() / 1000 - markerData.timestamp <= 6 * 60 * 60) {
             // Use cached data
             log("use-cached-market-data", {"data": markerData});
@@ -64,4 +66,5 @@ export async function setupMarketData() {
     markerData = (await (await fetch(MarketSource)).json()) as MarketData;
     GM_setValue("marketdata", JSON.stringify(markerData));
     log("loaded-market-data", {"data": markerData});
+    MarketLoadedEvent.complete();
 }

@@ -5,7 +5,7 @@ import {useRecentValues} from "../../shared/rxjs-react";
 import {ShowNumber, ShowPercent} from "../component/number";
 import {getActionName} from "../engine/action";
 
-import {ActionCompleteEvent, type ActionCompleteEventData, CharacterLoadedEvent} from "../engine/engine-event";
+import {ActionCompleteEvent, type ActionCompleteEventData, AllLoadedEvent} from "../engine/engine-event";
 import {getItemName} from "../engine/item";
 import {loadSettings, saveSettings, useSettings} from "../settings";
 import {AddView} from "../view";
@@ -13,7 +13,7 @@ import {AddView} from "../view";
 
 export function actionStatPlugin() {
     setupEventsStore();
-    CharacterLoadedEvent.subscribe({
+    AllLoadedEvent.subscribe({
         complete: () => {
             AddView({
                 id: "action-stat",
