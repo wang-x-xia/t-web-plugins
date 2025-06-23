@@ -1,17 +1,20 @@
 import * as React from "react";
-import {useMemo, useState} from "react";
 import {uniqueStrings} from "../../shared/list";
-import {useRecentValues} from "../../shared/rxjs-react";
+import {useLatestValue} from "../../shared/rxjs-react";
 import {ShowNumber, ShowPercent} from "../component/number";
 import {getActionName} from "../engine/action";
 
 import {ActionCompleteEvent, type ActionCompleteEventData, AllLoadedEvent} from "../engine/engine-event";
 import {getItemName} from "../engine/item";
+import {createCharacterStore, StoreMode} from "../engine/store";
 import {loadSettings, saveSettings, useSettings} from "../settings";
 import {AddView} from "../view";
 
 
+const store = createCharacterStore<ActionCompleteEventData[]>("action-stat.events", StoreMode.Local);
+
 export function actionStatPlugin() {
+    migration();
     setupEventsStore();
     AllLoadedEvent.subscribe({
         complete: () => {
@@ -27,6 +30,15 @@ export function actionStatPlugin() {
     });
 }
 
+function migration() {
+    // Clear previous stored data
+    const legacy = JSON.parse(GM_getValue("action-stat.store", "[]"))
+    if (legacy) {
+        store.data = legacy
+        GM_setValue("action-stat.store", "[]");
+    }
+}
+
 
 function setupEventsStore() {
     ActionCompleteEvent.subscribe((event) => {
@@ -36,57 +48,40 @@ function setupEventsStore() {
         if (event.count === 0) {
             return;
         }
-        storedEvents([...getStoredEvents(), event]);
+        store.data = [...store.data, event];
     });
 }
 
 
-function storedEvents(events: ActionCompleteEventData[]) {
-    GM_setValue("action-stat.store", JSON.stringify(events));
-}
-
-function getStoredEvents(): ActionCompleteEventData[] {
-    return JSON.parse(GM_getValue("action-stat.store", "[]"));
-}
-
 function ShowStoreInfo() {
-    const [size, setSize] = useState(getStoredEvents().length);
+    const events = useLatestValue(store.dataSubject) ?? [];
 
     const enable = useSettings("action-stat.store.enable", false);
     return <div>
         Action Stat store
         <input type="checkbox" checked={enable} onChange={(e) => saveSettings("action-stat.store.enable",
             e.target.checked)}/>
-        Stored records: <ShowNumber value={size}/>
-        <button onClick={() => setSize(getStoredEvents().length)}>Check count</button>
-        <button onClick={() => {
-            storedEvents([]);
-            setSize(0);
-        }}>Clear
-        </button>
+        Records: <ShowNumber value={events.length}/>
+        <button onClick={() => store.data = []}>Clear</button>
         <button onClick={() => exportStore()}>Save as</button>
     </div>
 }
 
 function exportStore() {
-    const data = getStoredEvents();
-    const blob = new Blob([JSON.stringify(data)], {type: "application/json;charset=utf-8"});
+    const blob = new Blob([JSON.stringify(store.data)], {type: "application/json;charset=utf-8"});
     window.open(window.URL.createObjectURL(blob));
 }
 
 function ShowActionStat() {
-    const storedEvents: ActionCompleteEventData[] = useMemo(() => getStoredEvents(), []);
+    const events = useLatestValue(store.dataSubject) ?? [];
 
-    const events = useRecentValues(ActionCompleteEvent)
-
-    const validEvents = [...storedEvents, ...events].filter(it => it.count)
-    if (validEvents.length === 0) {
+    if (events.length === 0) {
         return <>
             No Action
         </>;
     }
 
-    const groupedAction = validEvents.reduce((map, event) => {
+    const groupedAction = events.reduce((map, event) => {
         const action = getActionName(event.hrid);
         if (action in map) {
             map[action].push(event);

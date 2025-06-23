@@ -9,8 +9,13 @@ export interface CharacterStore<T> {
     dataOrNull(): T | null
 }
 
-export function createCharacterStore<T>(name: string): CharacterStore<T> {
-    return new CharacterStoreImpl(name);
+export enum StoreMode {
+    Memory = "memory",
+    Local = "local",
+}
+
+export function createCharacterStore<T>(name: string, mode = StoreMode.Memory): CharacterStore<T> {
+    return new CharacterStoreImpl(name, mode);
 }
 
 export function useStoreData<T>(store: CharacterStore<T>): T | null {
@@ -27,11 +32,14 @@ export function useStoreData<T>(store: CharacterStore<T>): T | null {
 
 class CharacterStoreImpl<T> implements CharacterStore<T> {
     readonly name: string;
+    readonly mode: StoreMode;
     private _data: T | null = null;
     dataSubject = new ReplaySubject<T>(1);
 
-    constructor(name: string) {
+    constructor(name: string, mode: StoreMode) {
         this.name = name;
+        this.mode = mode;
+        this.modeInit()
     }
 
     get data(): T {
@@ -45,7 +53,27 @@ class CharacterStoreImpl<T> implements CharacterStore<T> {
         const changed = this._data !== data;
         if (changed) {
             this._data = data;
+            this.modeUpdate(data);
             this.dataSubject.next(data);
+        }
+    }
+
+    private modeInit() {
+        switch (this.mode) {
+            case StoreMode.Local:
+                let rawData = GM_getValue(`character-store.${this.name}`, null);
+                if (rawData) {
+                    this.data = JSON.parse(rawData);
+                }
+                break;
+        }
+    }
+
+    private modeUpdate(data: T) {
+        switch (this.mode) {
+            case StoreMode.Local:
+                GM_setValue(`character-store.${this.name}`, JSON.stringify(data));
+                break;
         }
     }
 
