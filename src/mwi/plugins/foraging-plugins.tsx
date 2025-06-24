@@ -1,6 +1,6 @@
 import * as React from "react";
 import {Fragment, type ReactNode} from "react";
-import {log} from "../../shared/log";
+import {ShowDrop} from "../component/drop-view";
 import {ShowItem} from "../component/item";
 import {type ItemRow, ItemTable, prepareSellItems} from "../component/item-table";
 import {ShowNumber, ShowPercent} from "../component/number";
@@ -74,6 +74,7 @@ export function ShowForaging() {
 
 
     return <div>
+        <ShowDrop times={5898} rate={0.000036}/>
         <ShowBuffTable buffs={buffs}/>
         <table>
             <thead>

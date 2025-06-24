@@ -1,5 +1,5 @@
 import * as React from "react";
-import {useSettings} from "../settings";
+import {loadSettings, useSettings} from "../settings";
 
 export enum NumberFormat {
     Short = "short",
@@ -8,12 +8,16 @@ export enum NumberFormat {
 
 export function ShowNumber({value}: { value: number }) {
     const format = useSettings<NumberFormat>("number.format", NumberFormat.Short);
+    return <>{formatNumber(value, format)}</>;
+}
+
+export function formatNumber(value: number, format = loadSettings<NumberFormat>("number.format", NumberFormat.Short)) {
     switch (format) {
         default:
         case NumberFormat.Short:
-            return <>{formatWithSuffixes(value)}</>;
+            return formatWithSuffixes(value)
         case NumberFormat.Full:
-            return <>{formatWithThousandsSeparators(value)}</>;
+            return formatWithThousandsSeparators(value)
     }
 }
 
