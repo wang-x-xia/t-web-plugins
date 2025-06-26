@@ -23,12 +23,14 @@ export function getMarketData() {
 }
 
 export function getSellPriceByHrid(hrid: string, enhancementLevel: number = 0): number {
-    return getPriceByHrid(hrid, "b", enhancementLevel);
+    const price = getPriceByHrid(hrid, "b", enhancementLevel);
+    return (price < 0) ? 0 : price
 }
 
 
 export function getBuyPriceByHrid(hrid: string, enhancementLevel: number = 0): number {
-    return getPriceByHrid(hrid, "a", enhancementLevel);
+    const price = getPriceByHrid(hrid, "a", enhancementLevel);
+    return (price < 0) ? 1e9 : price
 }
 
 
@@ -47,7 +49,7 @@ function getPriceByHrid(hrid: string, field: "a" | "b", enhancementLevel: number
         }
         return 0;
     }
-    return getMarketData().marketData[hrid][enhancementLevel.toString()][field];
+    return getMarketData().marketData[hrid][enhancementLevel.toString()]?.[field] ?? -1;
 }
 
 

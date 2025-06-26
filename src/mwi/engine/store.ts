@@ -3,7 +3,7 @@ import {ReplaySubject} from "rxjs";
 
 export interface CharacterStore<T> {
     name: string
-    dataSubject: ReplaySubject<T>
+    data$: ReplaySubject<T>
     data: T
 
     dataOrNull(): T | null
@@ -22,7 +22,7 @@ export function useStoreData<T>(store: CharacterStore<T>): T | null {
     const [data, setData] = useState(store.dataOrNull());
 
     useEffect(() => {
-        const subscription = store.dataSubject.subscribe(setData);
+        const subscription = store.data$.subscribe(setData);
         return () => subscription.unsubscribe();
     });
 
@@ -34,7 +34,7 @@ class CharacterStoreImpl<T> implements CharacterStore<T> {
     readonly name: string;
     readonly mode: StoreMode;
     private _data: T | null = null;
-    dataSubject = new ReplaySubject<T>(1);
+    data$ = new ReplaySubject<T>(1);
 
     constructor(name: string, mode: StoreMode) {
         this.name = name;
@@ -54,7 +54,7 @@ class CharacterStoreImpl<T> implements CharacterStore<T> {
         if (changed) {
             this._data = data;
             this.modeUpdate(data);
-            this.dataSubject.next(data);
+            this.data$.next(data);
         }
     }
 

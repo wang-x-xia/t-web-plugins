@@ -54,7 +54,7 @@ function setupEventsStore() {
 
 
 function ShowStoreInfo() {
-    const events = useLatestValue(store.dataSubject) ?? [];
+    const events = useLatestValue(store.data$) ?? [];
 
     const enable = useSettings("action-stat.store.enable", false);
     return <div>
@@ -73,7 +73,7 @@ function exportStore() {
 }
 
 function ShowActionStat() {
-    const events = useLatestValue(store.dataSubject) ?? [];
+    const events = useLatestValue(store.data$) ?? [];
 
     if (events.length === 0) {
         return <>

@@ -24,6 +24,11 @@
     border: 1px solid black;
 }
 
+.app table ul {
+    margin: 2px;
+    padding-left: 1.5em;
+}
+
 .header {
     display: flex;
     flex-direction: row;

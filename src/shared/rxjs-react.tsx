@@ -25,3 +25,14 @@ export function useLatestValue<T>(obs: Observable<T>): T | null {
     }, [obs]);
     return value;
 }
+
+export function useLatestOrDefault<T>(obs: Observable<T>, defaultValue: T): T {
+    const [value, setValue] = useState<T>(defaultValue);
+    useEffect(() => {
+        const subscription = obs.subscribe(setValue);
+        return () => {
+            subscription.unsubscribe();
+        };
+    }, [obs]);
+    return value;
+}
