@@ -1,78 +1,33 @@
-import type {AnyActionType} from "./action";
-import {EquipmentLocation, EquipmentTool} from "./equipment";
+export type AnyBuffType = NormalBuffType | EnhancingBuffType
 
-export type AnyBuffType = CollectBuffType | OtherBuffType | CombatBuffType
-
-export enum CollectBuffType {
-    ActionSpeed = "action_speed",
-    Efficiency = "efficiency",
-    Gathering = "gathering",
-    Wisdom = "wisdom",
-    RareFind = "rare_find"
+export enum NormalBuffType {
+    ActionSpeed = "/buff_types/action_speed",
+    Efficiency = "/buff_types/efficiency",
+    Gathering = "/buff_types/gathering",
+    Wisdom = "/buff_types/wisdom",
+    RareFind = "/buff_types/rare_find",
+    EssenceFind = "/buff_types/essence_find",
 }
 
-export enum OtherBuffType {
-    // TODO
-    EnhancingSuccess = "enhancing_success",
+export enum EnhancingBuffType {
+    EnhancingSuccess = "/buff_types/enhancing_success",
 }
 
-export enum CombatBuffType {
-    PowerLevel = "power_level",
-    IntelligenceLevel = "intelligence_level",
-    MpRegen = "mp_regen",
-    MagicLevel = "magic_level",
-    RangeLevel = "range_level",
-    DefenseLevel = "defense_level",
-    StaminaLevel = "stamina_level",
-    HpRegen = "hp_regen",
-    AttackLevel = "attack_level",
-    AttackSpeed = "attack_speed",
-}
-
-export const AllBuffType: Record<string, AnyBuffType> = {
-    ...CollectBuffType,
-    ...OtherBuffType,
-    ...CombatBuffType,
-}
-
+/**
+ * This is class defined by this project
+ */
 export enum BuffSource {
+    // Equipment
     Equipment = "equipment",
     // Moo Pass
-    MooPassExperience = "experience_moo_pass_buff",
+    MooPass = "experience_moo_pass_buff",
     // Community
-    CommunityExperience = "experience_community_buff",
-    CommunityProduction = "production_community_buff",
-    GatheringCommunity = "gathering_community_buff",
-    EnhancingCommunity = "enhancing_community_buff",
-    CombatCommunity = "combat_community_buff",
+    Community = "community",
     // House
-    HouseEfficiency = "house_efficiency",
-    HouseExperience = "house_experience",
-    HouseRareFind = "house_rare_find",
-    HouseActionSpeed = "house_action_speed",
-    HousePowerLevel = "house_power_level",
-    HouseEnhancingSuccess = "house_enhancing_success",
+    Room = "room",
+    House = "house",
     // Tea
-    WisdomTea = "wisdom_tea",
-    GatheringTea = "gathering_tea",
-    EfficiencyTea = "efficiency_tea",
-}
-
-export interface BasicBuff {
-    action: AnyActionType,
-    type: AnyBuffType,
-    source: BuffSource,
-    value: number
-}
-
-export type Buff = EquipmentBuff | BasicBuff
-
-export interface EquipmentBuff extends BasicBuff {
-    source: BuffSource.Equipment
-    equipments: {
-        location: EquipmentLocation | EquipmentTool
-        itemHrid: string
-        enhancementLevel: number
-        value: number
-    }[]
+    Tea = "tea",
+    // Level
+    Level = "level",
 }
