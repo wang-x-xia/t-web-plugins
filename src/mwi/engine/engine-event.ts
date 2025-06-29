@@ -1,6 +1,7 @@
 import {combineLatest, ReplaySubject, Subject, take} from "rxjs";
 import type {
     ActionCompletedData,
+    ActionsUpdatedData,
     InitCharacterData,
     InitClientData,
     ItemUpdatedData,
@@ -18,6 +19,7 @@ export const InitCharacterData$ = new ReplaySubject<InitCharacterData>(1);
 export const LootLogData$ = new ReplaySubject<LootLogData>(1);
 export const ActionCompleteData$ = new Subject<ActionCompletedData>();
 export const ItemUpdatedData$ = new Subject<ItemUpdatedData>();
+export const ActionsUpdatedData$ = new Subject<ActionsUpdatedData>();
 
 
 export const CharacterLoadedEvent = InitCharacterData$.pipe(take(1));

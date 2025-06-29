@@ -1,6 +1,7 @@
-import {BehaviorSubject, map, Subject} from "rxjs";
+import {BehaviorSubject, combineLatest, map, Subject} from "rxjs";
 import {jsonCopy} from "../../shared/utils";
 import type {CharacterItem} from "../api/character-type";
+import {OfflineChanges$} from "./action-queue";
 import {type WithCharacterId} from "./character";
 import {
     ActionCompleteData$,
@@ -101,7 +102,7 @@ export interface ItemChanges extends ItemChangesData {
 
 export const InventoryItemChanges$ = new Subject<ItemChanges>();
 
-InitCharacterData$.subscribe(data => {
+combineLatest({changes: OfflineChanges$, data: InitCharacterData$}).subscribe(({changes, data}) => {
     if (data.offlineItems.length === 0) {
         return;
     }
@@ -119,7 +120,7 @@ InitCharacterData$.subscribe(data => {
             .filter(it => it.offlineCount < 0)
             .map(it => ({
                 hrid: it.itemHrid,
-                count: -it.offlineCount,
+                count: it.offlineCount,
                 level: it.enhancementLevel,
             })),
         cause: {"type": "action", "action": "Offline"},
@@ -128,6 +129,9 @@ InitCharacterData$.subscribe(data => {
 })
 
 ItemUpdatedData$.subscribe(({endCharacterItems}) => {
+    if (endCharacterItems === null) {
+        return
+    }
     updateInventory(endCharacterItems, ItemChangeCause$.getValue());
     ItemChangeCause$.next({"type": "unknown"});
 })

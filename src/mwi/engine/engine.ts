@@ -1,9 +1,10 @@
 import {log} from "../../shared/log";
 import type {ActionCompletedData} from "../api/message-type";
-import {updateCurrentActionData} from "./character";
+import {updateActionData} from "./action-queue";
 import {
     ActionCompleteData$,
     ActionCompleteEvent,
+    ActionsUpdatedData$,
     ClaimMarketListing$,
     InitCharacterData$,
     InitClientSubject,
@@ -61,33 +62,36 @@ function processResponse(data: any) {
         // ignore unknown messages
         return;
     }
-    if (["chat_message_received", "pong"].includes(data.type)) {
+    if (["chat_message_updated", "chat_message_received", "pong"].includes(data.type)) {
         // ignore chat messages
         return;
     }
     log("handle-response", {"type": data.type, "data": data});
     switch (data.type) {
+        case "action_completed":
+            ActionCompleteData$.next(data);
+            processActionComplete(data);
+            break;
+        case "actions_updated":
+            ActionsUpdatedData$.next(data);
+            break;
         case "init_character_data":
             InitCharacterData$.next(data);
             break;
         case "init_client_data":
             InitClientSubject.next(data);
             break;
-        case "loot_log_updated":
-            LootLogData$.next(data);
-            break;
-        case "action_completed":
-            ActionCompleteData$.next(data);
-            processActionComplete(data);
-            break;
         case "items_updated":
             ItemUpdatedData$.next(data);
+            break;
+        case "loot_log_updated":
+            LootLogData$.next(data);
             break;
     }
 }
 
 function processActionComplete(data: ActionCompletedData) {
-    const count = updateCurrentActionData(data.endCharacterAction);
+    const count = updateActionData(data.endCharacterAction);
     const {added, removed} = updateInventory(data.endCharacterItems ?? [], {
         type: "action",
         action: data.endCharacterAction.actionHrid,

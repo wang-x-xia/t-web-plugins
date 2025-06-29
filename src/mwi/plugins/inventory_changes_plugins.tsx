@@ -58,7 +58,8 @@ InventoryItemChanges$.subscribe(({added, removed, cause, time}) => {
     } else if (cause.type === "market") {
         entry.market = mergeItemChangesData(entry.market, {added, removed})
     }
-    result.sort((a, b) => a.time - b.time);
+    // Reverse order
+    result.sort((a, b) => b.time - a.time);
     InventoryChangesData$.next(result);
 });
 
