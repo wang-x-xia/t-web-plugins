@@ -27,14 +27,6 @@ export interface CharacterSetting {
     characterID: number
 }
 
-export interface CharacterAction extends HasId, HasTime, OwnedByCharacter {
-    actionHrid: string
-    hasMaxCount: boolean
-    maxCount: number
-    currentCount: number
-    wave: number
-}
-
 export interface CharacterQuest extends HasId, HasTime, OwnedByCharacter {
     category: "/quest_category/random_task"
     type: "/quest_type/action" | "/quest_type/monster"

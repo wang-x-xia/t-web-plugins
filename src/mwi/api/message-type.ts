@@ -3,7 +3,6 @@ import type {BuffDetails, BuffTypeDetails, CommunityBuffTypeDetails, NoncombatBu
 import type {
     Character,
     CharacterAbility,
-    CharacterAction,
     CharacterFoodDrinkSlot,
     CharacterHouseRoom,
     CharacterInfo,
@@ -76,7 +75,7 @@ export interface InitCharacterData {
     character: Character
     characterInfo: CharacterInfo
     characterSetting: CharacterSetting
-    characterActions: CharacterAction[]
+    characterActions: ActionData[]
     characterQuests: CharacterQuest[]
     characterSkills: CharacterSkill[]
     characterAbilities: CharacterAbility[]
@@ -115,5 +114,10 @@ export interface ActionCompletedData {
 
 export interface ItemUpdatedData {
     type: "items_updated"
-    endCharacterItems: CharacterItem[]
+    endCharacterItems: CharacterItem[] | null
+}
+
+export interface ActionsUpdatedData {
+    type: "actions_updated"
+    endCharacterActions: ActionData[]
 }
