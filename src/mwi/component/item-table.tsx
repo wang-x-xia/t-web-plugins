@@ -49,6 +49,16 @@ function prepareItems(inputs: ItemInput[], priceFunc: (hrid: string, enhancement
 }
 
 
+export function BuyItemTable({items}: { items: ItemInput[] }) {
+    const {items: preparedItems} = prepareBuyItems(items);
+    return <ItemTable items={preparedItems}/>;
+}
+
+export function SellItemTable({items}: { items: ItemInput[] }) {
+    const {items: preparedItems} = prepareSellItems(items);
+    return <ItemTable items={preparedItems}/>;
+}
+
 export function ItemTable({items}: { items: ItemRow[] }) {
     if (items.length === 0) {
         return <></>

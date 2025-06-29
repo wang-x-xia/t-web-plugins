@@ -95,6 +95,7 @@ export interface InitCharacterData {
     houseActionTypeBuffsMap: Record<string, BuffDetails[]>
     consumableActionTypeBuffsMap: Record<string, BuffDetails[]>
     equipmentActionTypeBuffsMap: Record<string, BuffDetails[]>
+    offlineItems: CharacterItem[]
 }
 
 
@@ -110,4 +111,9 @@ export interface ActionCompletedData {
     endCharacterAbilities: CharacterAbility[] | null
     endCharacterSkills: CharacterSkill[] | null
     endCharacterQuests: CharacterQuest[] | null
+}
+
+export interface ItemUpdatedData {
+    type: "items_updated"
+    endCharacterItems: CharacterItem[]
 }

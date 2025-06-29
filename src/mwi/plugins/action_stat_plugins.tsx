@@ -37,6 +37,24 @@ function migration() {
         store.data = legacy
         GM_setValue("action-stat.store", "[]");
     }
+    if (store.data.find(it => [it.added, it.removed].find(it => (it as any).itemHrid))) {
+        // Migrate from itemHrid to hrid
+        store.data = store.data.map(it => {
+            return {
+                ...it,
+                added: it.added.map(it => ({
+                    hrid: (it as any).itemHrid ?? it.hrid,
+                    level: it.level ?? 0,
+                    count: it.count
+                })),
+                removed: it.removed.map(it => ({
+                    hrid: (it as any).itemHrid ?? it.hrid,
+                    level: it.level ?? 0,
+                    count: it.count
+                })),
+            }
+        })
+    }
 }
 
 
@@ -163,7 +181,7 @@ export function ShowEfficiencyStat({events}: { events: ActionCompleteEventData[]
 }
 
 export function ShowEventStats({events}: { events: ActionCompleteEventData[] }) {
-    const items = uniqueStrings(events.flatMap(it => [...it.added, ...it.removed].map(it => it.itemHrid)))
+    const items = uniqueStrings(events.flatMap(it => [...it.added, ...it.removed].map(it => it.hrid)))
     return <td>
         <table>
             <thead>
@@ -195,7 +213,7 @@ function ShowItemStat({itemHrid, events}: { itemHrid: string, events: ActionComp
     }[] = []
     const subtotalActions: Record<number, number> = {};
     events.forEach(event => {
-        const itemCount = [...event.added, ...event.removed].find(item => item.itemHrid === itemHrid)?.count ?? 0;
+        const itemCount = [...event.added, ...event.removed].find(item => item.hrid === itemHrid)?.count ?? 0;
         let row = rows.find(row => row.action === event.count && row.itemCount === itemCount)
         if (!row) {
             row = {
