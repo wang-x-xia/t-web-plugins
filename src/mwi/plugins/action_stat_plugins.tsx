@@ -2,27 +2,40 @@ import * as React from "react";
 import {uniqueStrings} from "../../shared/list";
 import {useLatestValue} from "../../shared/rxjs-react";
 import {ShowNumber, ShowPercent} from "../component/number";
+import {ShowStoreActions} from "../component/store";
 import {getActionName} from "../engine/action";
 
 import {ActionCompleteEvent, type ActionCompleteEventData, AllLoadedEvent} from "../engine/engine-event";
 import {getItemName} from "../engine/item";
-import {createCharacterStore, StoreMode} from "../engine/store";
-import {loadSettings, saveSettings, useSettings} from "../settings";
+import {type StoreDefine, storeSubject} from "../engine/store";
 import {AddView} from "../view";
 
 
-const store = createCharacterStore<ActionCompleteEventData[]>("action-stat.events", StoreMode.Local);
+const ActionStatStore: StoreDefine<ActionCompleteEventData[]> = {
+    id: "action-stat",
+    name: "Action Stat",
+    characterBased: true,
+    enableSettings: true,
+    defaultValue: [],
+}
+
+const ActionStat$ = storeSubject(ActionStatStore);
+ActionCompleteEvent.subscribe((event) => {
+    if (event.count === 0) {
+        return;
+    }
+    ActionStat$.next([...ActionStat$.getValue(), event]);
+});
 
 export function actionStatPlugin() {
     migration();
-    setupEventsStore();
     AllLoadedEvent.subscribe({
         complete: () => {
             AddView({
                 id: "action-stat",
                 name: "Action Stat",
                 node: <>
-                    <ShowStoreInfo/>
+                    <ShowStoreActions store={ActionStatStore}/>
                     <ShowActionStat/>
                 </>,
             });
@@ -31,67 +44,33 @@ export function actionStatPlugin() {
 }
 
 function migration() {
-    // Clear previous stored data
-    const legacy = JSON.parse(GM_getValue("action-stat.store", "[]"))
+    let legacy: ActionCompleteEventData[] = JSON.parse(GM_getValue("character-store.action-stat.events", "[]"))
     if (legacy) {
-        store.data = legacy
-        GM_setValue("action-stat.store", "[]");
-    }
-    if (store.data.find(it => [it.added, it.removed].find(it => (it as any).itemHrid))) {
-        // Migrate from itemHrid to hrid
-        store.data = store.data.map(it => {
-            return {
-                ...it,
-                added: it.added.map(it => ({
-                    hrid: (it as any).itemHrid ?? it.hrid,
-                    level: it.level ?? 0,
-                    count: it.count
-                })),
-                removed: it.removed.map(it => ({
-                    hrid: (it as any).itemHrid ?? it.hrid,
-                    level: it.level ?? 0,
-                    count: it.count
-                })),
-            }
-        })
-    }
-}
-
-
-function setupEventsStore() {
-    ActionCompleteEvent.subscribe((event) => {
-        if (!loadSettings("action-stat.store.enable", false)) {
-            return;
+        GM_deleteValue("character-store.action-stat.events");
+        if (legacy.find(it => [it.added, it.removed].find(it => (it as any).itemHrid))) {
+            // Migrate from itemHrid to hrid
+            legacy = legacy.map(it => {
+                return {
+                    ...it,
+                    added: it.added.map(it => ({
+                        hrid: (it as any).itemHrid ?? it.hrid,
+                        level: it.level ?? 0,
+                        count: it.count
+                    })),
+                    removed: it.removed.map(it => ({
+                        hrid: (it as any).itemHrid ?? it.hrid,
+                        level: it.level ?? 0,
+                        count: it.count
+                    })),
+                }
+            })
         }
-        if (event.count === 0) {
-            return;
-        }
-        store.data = [...store.data, event];
-    });
-}
-
-
-function ShowStoreInfo() {
-    const events = useLatestValue(store.data$) ?? [];
-
-    const enable = useSettings("action-stat.store.enable", false);
-    return <div>
-        Action Stat store
-        <input type="checkbox" checked={enable} onChange={(e) => saveSettings("action-stat.store.enable",
-            e.target.checked)}/>
-        Records: <ShowNumber value={events.length}/>
-        <button onClick={() => store.data = []}>Clear</button>
-        <button onClick={() => exportStore()}>Save as</button>
-    </div>
-}
-
-function exportStore() {
-    const blob = new Blob([JSON.stringify(store.data)], {type: "application/json;charset=utf-8"});
-    window.open(window.URL.createObjectURL(blob));
+        ActionStat$.next(legacy);
+    }
 }
 
 function ShowActionStat() {
-    const events = useLatestValue(store.data$) ?? [];
+    const events = useLatestValue(ActionStat$) ?? [];
 
     if (events.length === 0) {
         return <>
