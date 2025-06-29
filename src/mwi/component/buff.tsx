@@ -7,7 +7,7 @@ import {type AnyActionType, CombatActionType, EnhancingActionType} from "../engi
 import {getBuffTypeName, getBuffValueOfEquipment, getBuffValueOfTea} from "../engine/buff";
 import {type AnyBuffType, BuffSource, EnhancingBuffType, NormalBuffType} from "../engine/buff-type";
 import {InitCharacterSubject} from "../engine/engine-event";
-import {equipmentStore} from "../engine/equipment";
+import {Equipments$} from "../engine/equipment";
 import {getSkillHrid} from "../engine/hrid";
 import {ShowItem} from "./item";
 import {ShowPercent} from "./number";
@@ -190,7 +190,7 @@ export function ShowBuffByBuffSourceEquipment({actionType, buffType}: {
 }) {
     const parentContext = useContext(BuffSourceContext);
 
-    const equipments$ = useMemo(() => equipmentStore().data$.pipe(
+    const equipments$ = useMemo(() => Equipments$.pipe(
         map(equipment => Object.values(equipment)
             .map(equipment => ({
                 equipment,

@@ -36,6 +36,7 @@ const ItemChangesStore: StoreDefine<HourChangesData[]> = {
     id: "item-changes",
     name: "Item Changes",
     enableSettings: true,
+    characterBased: true,
     defaultValue: [],
 }
 

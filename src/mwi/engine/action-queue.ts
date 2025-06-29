@@ -10,6 +10,7 @@ export const ActionQueueStore: StoreDefine<ActionData[]> = {
     name: "Action Queue",
     defaultValue: [],
     enableSettings: false,
+    characterBased: true,
 };
 
 export const ActionQueue$ = storeSubject(ActionQueueStore);
