@@ -5,6 +5,7 @@ import {
     ActionCompleteData$,
     ActionCompleteEvent,
     ActionsUpdatedData$,
+    ClaimCharacterQuest$,
     ClaimMarketListing$,
     InitCharacterData$,
     InitClientSubject,
@@ -47,6 +48,9 @@ function processRequest(data: any) {
     }
     log("handle-request", {"type": data.type, "data": data});
     switch (data.type) {
+        case "claim_character_quest":
+            ClaimCharacterQuest$.next(data);
+            break;
         case "claim_market_listing":
             ClaimMarketListing$.next(data);
             break;

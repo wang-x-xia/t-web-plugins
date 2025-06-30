@@ -5,6 +5,7 @@ import {OfflineChanges$} from "./action-queue";
 import {type WithCharacterId} from "./character";
 import {
     ActionCompleteData$,
+    ClaimCharacterQuest$,
     ClaimMarketListing$,
     InitCharacterData$,
     ItemUpdatedData$,
@@ -55,6 +56,8 @@ export type ItemChangeCause = {
     "type": "market",
 } | {
     "type": "unknown",
+} | {
+    "type": "quest",
 }
 
 const ItemChangeCause$ = new BehaviorSubject<ItemChangeCause>({"type": "unknown"});
@@ -67,6 +70,9 @@ ClaimMarketListing$.subscribe(() => {
 })
 PostMarketOrder$.subscribe(() => {
     ItemChangeCause$.next({"type": "market"});
+})
+ClaimCharacterQuest$.subscribe(() => {
+    ItemChangeCause$.next({"type": "quest"});
 })
 
 
@@ -144,7 +150,7 @@ export function updateInventory(endCharacterItems: CharacterItem[], cause: ItemC
         .filter(item => item.itemLocationHrid === "/item_locations/inventory")
         .map<ItemChange>((item) => {
             inventoryAfter[item.itemHrid] = inventoryBefore[item.itemHrid] ?? {};
-            const before = inventoryBefore[item.itemHrid][item.enhancementLevel] ?? 0;
+            const before = inventoryBefore[item.itemHrid]?.[item.enhancementLevel] ?? 0;
             const diff = item.count - before;
             inventoryAfter[item.itemHrid][item.enhancementLevel] = item.count;
             return {hrid: item.itemHrid, level: item.enhancementLevel, count: diff};

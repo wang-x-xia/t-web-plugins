@@ -16,3 +16,10 @@ export interface PostMarketOrder {
         isSell: boolean
     }
 }
+
+export interface ClaimCharacterQuest {
+    type: "claim_character_quest",
+    claimCharacterQuestData: {
+        characterQuestId: number
+    }
+}

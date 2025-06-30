@@ -1,4 +1,6 @@
 import * as React from "react";
+import {useState} from "react";
+import {sum} from "../../shared/list";
 import {getItemName} from "../engine/item";
 import {getBuyPriceByHrid, getSellPriceByHrid} from "../engine/market";
 import {ShowNumber, ShowPercent} from "./number";
@@ -48,15 +50,30 @@ function prepareItems(inputs: ItemInput[], priceFunc: (hrid: string, enhancement
     return {items, total,};
 }
 
-
-export function BuyItemTable({items}: { items: ItemInput[] }) {
+export function BuyItemTable({items, defaultExpand}: { items: ItemInput[], defaultExpand?: boolean }) {
     const {items: preparedItems} = prepareBuyItems(items);
-    return <ItemTable items={preparedItems}/>;
+    return <ExpandableItemTable items={preparedItems} defaultExpand={defaultExpand}/>;
 }
 
-export function SellItemTable({items}: { items: ItemInput[] }) {
+export function SellItemTable({items, defaultExpand}: { items: ItemInput[], defaultExpand?: boolean }) {
     const {items: preparedItems} = prepareSellItems(items);
-    return <ItemTable items={preparedItems}/>;
+    return <ExpandableItemTable items={preparedItems} defaultExpand={defaultExpand}/>;
+}
+
+export function ExpandableItemTable({items, defaultExpand}: { items: ItemRow[], defaultExpand?: boolean }) {
+    const [expanded, setExpanded] = useState(defaultExpand ?? false);
+
+    if (expanded) {
+        return <>
+            <button onClick={() => setExpanded(!expanded)}>-</button>
+            <ItemTable items={items}/>
+        </>
+    } else {
+        return <>
+            <button onClick={() => setExpanded(!expanded)}>+</button>
+            <ShowNumber value={sum(items.map(item => item.subtotal))}/>
+        </>
+    }
 }
 
 export function ItemTable({items}: { items: ItemRow[] }) {

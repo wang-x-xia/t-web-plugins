@@ -7,10 +7,11 @@ import type {
     ItemUpdatedData,
     LootLogData
 } from "../api/message-type";
-import type {ClaimMarketListing, PostMarketOrder} from "../api/request-message-type";
+import type {ClaimCharacterQuest, ClaimMarketListing, PostMarketOrder} from "../api/request-message-type";
 import type {ItemChangesData} from "./inventory";
 
 // Request
+export const ClaimCharacterQuest$ = new Subject<ClaimCharacterQuest>();
 export const ClaimMarketListing$ = new Subject<ClaimMarketListing>();
 export const PostMarketOrder$ = new Subject<PostMarketOrder>();
 
