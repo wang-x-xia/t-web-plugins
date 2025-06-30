@@ -60,6 +60,7 @@ export function updateStoreData<T>(store: StoreDefine<T>, data: T) {
     const {id, enableSettings} = store;
     if (enableSettings && !loadSettings(`store.${id}.enable`, true)) {
         log("skip-update-store-data", {store, data});
+        return;
     }
     const storedData: StoredValue<T> = {updated: Date.now(), data};
     log("update-store-data", {store, storedData});
@@ -76,10 +77,19 @@ export function resetStoreData<T>(store: StoreDefine<T>) {
 export function storeSubject<T>(store: StoreDefine<T>): BehaviorSubject<T> {
     const {defaultValue} = store;
     const subject = new BehaviorSubject<T>(defaultValue);
-    const data = getStoreData<T>(store);
-    log("use-store-data", {store, data});
-    if (data.data !== null) {
-        subject.next(data.data);
+
+    function initStoreData() {
+        const data = getStoreData(store);
+        log("use-store-data", {store, data});
+        if (data.data !== null) {
+            subject.next(data.data);
+        }
+    }
+
+    if (store.characterBased) {
+        CharacterId$.subscribe(() => initStoreData());
+    } else {
+        initStoreData();
     }
     subject.subscribe(data => updateStoreData(store, data));
     return subject;
