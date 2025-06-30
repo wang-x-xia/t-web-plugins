@@ -5,7 +5,8 @@ import {NormalBuffType} from "../engine/buff-type";
 import {getClientData} from "../engine/client";
 import {InitClientSubject} from "../engine/engine-event";
 import {useBuffData} from "./buff";
-import {type ItemInput, ItemTable, prepareBuyItems, prepareSellItems} from "./item-table";
+import {Expandable} from "./expandable";
+import {BuyItemTable, type ItemInput, prepareBuyItems, prepareSellItems, SellItemTable} from "./item-table";
 import {ShowNumber} from "./number";
 
 
@@ -96,7 +97,7 @@ export function ShowCollectOrManufacturingAction({action}: { action: string }) {
         count: input.count * times,
     }));
 
-    const {items: inputRows, total: cost} = prepareBuyItems(inputs);
+    const {total: cost} = prepareBuyItems(inputs);
 
     const outputs: ItemInput[] = [
         ...(actionDetails.outputItems ?? []).map(input => ({
@@ -125,7 +126,7 @@ export function ShowCollectOrManufacturingAction({action}: { action: string }) {
                 })),
     ];
 
-    const {items: outputRows, total: income} = prepareSellItems(outputs);
+    const {total: income} = prepareSellItems(outputs);
 
     useEffect(() => {
         updateProfit(action, income - cost);
@@ -148,26 +149,13 @@ export function ShowCollectOrManufacturingAction({action}: { action: string }) {
         </td>
         {/* Profit */}
         <td>
-            <div>
-                <ShowNumber value={income - cost}/>
-            </div>
-            {cost > 0 ? <>
-                <ul>
-                    <li>
-                        +<ShowNumber value={income}/>
-                    </li>
-                    <li>
-                        -<ShowNumber value={cost}/>
-                    </li>
-                </ul>
-            </> : <></>}
-
+            <ShowNumber value={income - cost}/>
         </td>
         {/* Input */}
-        <td><ItemTable items={inputRows}/></td>
+        <td><BuyItemTable items={inputs}/></td>
         {/* Output */}
-        <td><ItemTable items={outputRows}/></td>
+        <td><SellItemTable items={outputs}/></td>
         {/* Buff */}
-        <td><BuffTable/></td>
+        <td><Expandable><BuffTable/></Expandable></td>
     </>
 }
