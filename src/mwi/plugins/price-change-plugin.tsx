@@ -103,6 +103,10 @@ export function ShowPriceChange() {
                 {history.map(it =>
                     <th key={it.timestamp} colSpan={2}>
                         <ShowTimestamp value={it.timestamp * 1000}/>
+                        <button
+                            onClick={() => MarketHistoryData$.next(history.filter(it => it.timestamp !== it.timestamp))}>
+                            x
+                        </button>
                     </th>)}
             </tr>
             <tr>
