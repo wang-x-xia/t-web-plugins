@@ -7,10 +7,16 @@ import type {
     ItemUpdatedData,
     LootLogData
 } from "../api/message-type";
-import type {ClaimCharacterQuest, ClaimMarketListing, PostMarketOrder} from "../api/request-message-type";
+import type {
+    ClaimAllMarketListings,
+    ClaimCharacterQuest,
+    ClaimMarketListing,
+    PostMarketOrder
+} from "../api/request-message-type";
 import type {ItemChangesData} from "./inventory";
 
 // Request
+export const ClaimAllMarketListings$ = new Subject<ClaimAllMarketListings>();
 export const ClaimCharacterQuest$ = new Subject<ClaimCharacterQuest>();
 export const ClaimMarketListing$ = new Subject<ClaimMarketListing>();
 export const PostMarketOrder$ = new Subject<PostMarketOrder>();
@@ -24,8 +30,8 @@ export const ActionsUpdatedData$ = new Subject<ActionsUpdatedData>();
 
 
 export const CharacterLoadedEvent = InitCharacterData$.pipe(take(1));
-export const MarketLoadedEvent = new Subject();
-export const AllLoadedEvent = combineLatest([CharacterLoadedEvent, MarketLoadedEvent]);
+export const MarketLoaded$ = new Subject();
+export const AllLoadedEvent = combineLatest([CharacterLoadedEvent, MarketLoaded$]);
 export const InitCharacterSubject = InitCharacterData$;
 export const InitClientSubject = new ReplaySubject<InitClientData>(1);
 export const LootLogSubject = LootLogData$;

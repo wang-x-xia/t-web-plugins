@@ -1,6 +1,7 @@
 import * as React from "react";
 import {useLatestOrDefault} from "../../shared/rxjs-react";
 import {jsonCopy} from "../../shared/utils";
+import {ShowTimestamp} from "../component/date";
 import {BuyItemTable, SellItemTable} from "../component/item-table";
 import {ShowStoreActions} from "../component/store";
 import {getActionName} from "../engine/action";
@@ -87,7 +88,7 @@ function ShowInventoryChanges() {
         </thead>
         <tbody>
         {changes.map((it) => <tr key={it.time}>
-            <td>{new Date(it.time).toLocaleString()}</td>
+            <td><ShowTimestamp value={it.time}/></td>
             <td>
                 <table>
                     <thead>
