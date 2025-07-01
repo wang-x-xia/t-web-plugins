@@ -79,7 +79,7 @@ function ShowActionStat() {
     }
 
     const groupedAction = events.reduce((map, event) => {
-        const action = getActionName(event.hrid);
+        const action = event.hrid;
         if (action in map) {
             map[action].push(event);
         } else {
@@ -98,7 +98,12 @@ function ShowActionStat() {
         </thead>
         <tbody>
         {Object.entries(groupedAction).map(([hrid, events]) => <tr key={hrid}>
-            <th>{getActionName(hrid)}</th>
+            <th>
+                {getActionName(hrid)}
+                <button onClick={() => ActionStat$.next(ActionStat$.getValue().filter(it => it.hrid !== hrid))}>
+                    x
+                </button>
+            </th>
             <ShowEfficiencyStat events={events}/>
             <ShowEventStats events={events}/>
         </tr>)}

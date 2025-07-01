@@ -88,7 +88,12 @@ function ShowInventoryChanges() {
         </thead>
         <tbody>
         {changes.map((it) => <tr key={it.time}>
-            <td><ShowTimestamp value={it.time}/></td>
+            <td>
+                <ShowTimestamp value={it.time}/>
+                <button onClick={() => InventoryChangesData$.next(changes.filter(({time}) => time !== it.time))}>
+                    x
+                </button>
+            </td>
             <td>
                 <table>
                     <thead>

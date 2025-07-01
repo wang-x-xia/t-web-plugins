@@ -1,4 +1,4 @@
-import {BehaviorSubject} from "rxjs";
+import {BehaviorSubject, Subject} from "rxjs";
 import {info, log} from "../../shared/log";
 import {loadSettings} from "../settings";
 import {InitCharacterData$} from "./engine-event";
@@ -8,6 +8,8 @@ const CharacterId$ = new BehaviorSubject<string | null>(null);
 InitCharacterData$.subscribe(data => {
     CharacterId$.next(data.character.id);
 });
+
+export const StoreSizeChange$ = new Subject<{ store: StoreDefine<any>, size: number }>();
 
 export interface StoreDefine<T> {
     id: string;
@@ -64,7 +66,9 @@ export function updateStoreData<T>(store: StoreDefine<T>, data: T) {
     }
     const storedData: StoredValue<T> = {updated: Date.now(), data};
     log("update-store-data", {store, storedData});
-    GM_setValue(getStoreKey(store), JSON.stringify(storedData));
+    const json = JSON.stringify(storedData);
+    GM_setValue(getStoreKey(store), json);
+    StoreSizeChange$.next({store, size: json.length});
 }
 
 export function resetStoreData<T>(store: StoreDefine<T>) {
@@ -72,6 +76,7 @@ export function resetStoreData<T>(store: StoreDefine<T>) {
     const storedData: StoredValue<T> = {updated: Date.now(), data: defaultValue};
     log("reset-store-data", {store, storedData});
     GM_setValue(getStoreKey(store), JSON.stringify(storedData));
+    StoreSizeChange$.next({store, size: 0});
 }
 
 export function storeSubject<T>(store: StoreDefine<T>): BehaviorSubject<T> {
@@ -99,4 +104,9 @@ export function storeSubject<T>(store: StoreDefine<T>): BehaviorSubject<T> {
 export function exportStore<T>(store: StoreDefine<T>) {
     const blob = new Blob([JSON.stringify(getStoreData(store))], {type: "application/json;charset=utf-8"});
     window.open(window.URL.createObjectURL(blob));
+}
+
+export function getStoreSize<T>(store: StoreDefine<T>): number {
+    const data = getStoreData(store);
+    return JSON.stringify(data).length;
 }
