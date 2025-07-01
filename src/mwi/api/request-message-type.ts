@@ -1,3 +1,7 @@
+export interface ClaimAllMarketListings {
+    type: "claim_all_market_listings",
+}
+
 export interface ClaimMarketListing {
     type: "claim_market_listing",
     claimMarketListingData: {

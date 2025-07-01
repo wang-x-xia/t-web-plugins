@@ -1,6 +1,7 @@
+import {ReplaySubject} from "rxjs";
 import {log} from "../../shared/log";
-import {MarketLoadedEvent} from "./engine-event";
-import {getOpenableItem, isItemOpenable} from "./item";
+import {MarketLoaded$} from "./engine-event";
+import {getOpenableItem, isItemOpenable, SpecialItems} from "./item";
 
 const MarketSource = "game_data/marketplace.json"
 
@@ -22,20 +23,20 @@ export function getMarketData() {
     return markerData;
 }
 
-export function getSellPriceByHrid(hrid: string, enhancementLevel: number = 0): number {
-    const price = getPriceByHrid(hrid, "b", enhancementLevel);
+export function getSellPriceByHrid(hrid: string, enhancementLevel: number = 0, marketData: MarketData | undefined = undefined): number {
+    const price = getPriceByHrid(hrid, "b", enhancementLevel, marketData ?? getMarketData());
     return (price < 0) ? 0 : price
 }
 
 
-export function getBuyPriceByHrid(hrid: string, enhancementLevel: number = 0): number {
-    const price = getPriceByHrid(hrid, "a", enhancementLevel);
+export function getBuyPriceByHrid(hrid: string, enhancementLevel: number = 0, marketData: MarketData | undefined = undefined): number {
+    const price = getPriceByHrid(hrid, "a", enhancementLevel, marketData ?? getMarketData());
     return (price < 0) ? 1e9 : price
 }
 
 
-function getPriceByHrid(hrid: string, field: "a" | "b", enhancementLevel: number = 0,): number {
-    if (hrid === "/items/coin") {
+function getPriceByHrid(hrid: string, field: "a" | "b", enhancementLevel: number = 0, marketData: MarketData): number {
+    if (hrid === SpecialItems.Coin) {
         // Coin is always 1
         return 1;
     }
@@ -43,7 +44,7 @@ function getPriceByHrid(hrid: string, field: "a" | "b", enhancementLevel: number
         if (isItemOpenable(hrid)) {
             const openableItem = getOpenableItem(hrid)!;
             const otherSellAmount = Object.entries(openableItem.drops).reduce((acc, [dropHrid, dropCount]) => acc +
-                getPriceByHrid(dropHrid, field) * dropCount, 0);
+                getPriceByHrid(dropHrid, field, 0, marketData) * dropCount, 0);
             // The other sell amount is the remaining part except self-drop
             return otherSellAmount / (1 - openableItem.selfDrop);
         }
@@ -52,11 +53,13 @@ function getPriceByHrid(hrid: string, field: "a" | "b", enhancementLevel: number
     return getMarketData().marketData[hrid][enhancementLevel.toString()]?.[field] ?? -1;
 }
 
+export const MarketData$ = new ReplaySubject<MarketData>(1);
 
 export async function setupMarketData() {
     if (GM_getValue("marketdata", false)) {
         markerData = JSON.parse(GM_getValue("marketdata", "{}") as string) as MarketData;
-        MarketLoadedEvent.complete();
+        MarketData$.next(markerData);
+        MarketLoaded$.complete();
         if (Date.now() / 1000 - markerData.timestamp <= 6 * 60 * 60) {
             // Use cached data
             log("use-cached-market-data", {"data": markerData});
@@ -68,5 +71,6 @@ export async function setupMarketData() {
     markerData = (await (await fetch(MarketSource)).json()) as MarketData;
     GM_setValue("marketdata", JSON.stringify(markerData));
     log("loaded-market-data", {"data": markerData});
-    MarketLoadedEvent.complete();
+    MarketData$.next(markerData);
+    MarketLoaded$.complete();
 }

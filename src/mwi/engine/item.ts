@@ -5,6 +5,22 @@ export function getItemName(itemHrid: string): string {
 }
 
 
+export enum SpecialItems {
+    Coin = "/items/coin"
+}
+
+export enum ItemCategory {
+    AbilityBook = "/item_categories/ability_book",
+    Currency = "/item_categories/currency",
+    Drink = "/item_categories/drink",
+    Equipment = "/item_categories/equipment",
+    Food = "/item_categories/food",
+    Key = "/item_categories/key",
+    Loot = "/item_categories/loot",
+    Resource = "/item_categories/resource",
+    Unknown = "/item_categories/unknown",
+}
+
 export interface OpenableItem {
     hrid: string;
     selfDrop: number;
@@ -33,4 +49,8 @@ export function getOpenableItem(itemHrid: string): OpenableItem | null {
         selfDrop,
         drops,
     }
+}
+
+export function getItemCategory(itemHrid: string): ItemCategory {
+    return (getClientData().itemDetailMap[itemHrid]?.categoryHrid as ItemCategory) ?? ItemCategory.Unknown;
 }

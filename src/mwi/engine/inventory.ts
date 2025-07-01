@@ -5,6 +5,7 @@ import {OfflineChanges$} from "./action-queue";
 import {type WithCharacterId} from "./character";
 import {
     ActionCompleteData$,
+    ClaimAllMarketListings$,
     ClaimCharacterQuest$,
     ClaimMarketListing$,
     InitCharacterData$,
@@ -64,6 +65,9 @@ const ItemChangeCause$ = new BehaviorSubject<ItemChangeCause>({"type": "unknown"
 ActionCompleteData$.subscribe(({endCharacterAction}) => {
     // This is the changes for tea
     ItemChangeCause$.next({"type": "action", "action": endCharacterAction.actionHrid});
+})
+ClaimAllMarketListings$.subscribe(() => {
+    ItemChangeCause$.next({"type": "market"});
 })
 ClaimMarketListing$.subscribe(() => {
     ItemChangeCause$.next({"type": "market"});
