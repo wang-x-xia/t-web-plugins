@@ -3,11 +3,13 @@ import {Fragment} from "react";
 import {sum} from "../../shared/list";
 import {useLatestOrDefault, useLatestValue} from "../../shared/rxjs-react";
 import {ShowTimestamp} from "../component/date";
+import {ShowItem} from "../component/item";
 import {ShowNumber} from "../component/number";
+import {MarketDataContext, ShowSellAmount, ShowSellPrice} from "../component/price";
 import {ShowStoreActions} from "../component/store";
 import {AllLoadedEvent} from "../engine/engine-event";
 import {InventoryData$} from "../engine/inventory";
-import {getItemCategory, getItemName, ItemCategory, SpecialItems} from "../engine/item";
+import {getItemCategory, ItemCategory, SpecialItems} from "../engine/item";
 import {getSellPriceByHrid, type MarketData, MarketData$} from "../engine/market";
 import {type StoreDefine, storeSubject} from "../engine/store";
 import {saveSettings, useSettings} from "../settings";
@@ -120,28 +122,24 @@ export function ShowPriceChange() {
             </thead>
             <tbody>
             {main.map(({hrid, count}) => <tr key={hrid}>
-                <th>{getItemName(hrid)}</th>
+                <th><ShowItem hrid={hrid}/></th>
                 <td><ShowNumber value={count}/></td>
-                {history.map(marketData => {
-                    const price = getSellPriceByHrid(hrid, 0, marketData);
-                    return <Fragment key={marketData.timestamp}>
-                        <td><ShowNumber value={price}/></td>
-                        <td><ShowNumber value={price * count}/></td>
-                    </Fragment>;
-                })}
+                {history.map(marketData =>
+                    <MarketDataContext.Provider key={marketData.timestamp} value={marketData}>
+                        <td><ShowSellPrice hrid={hrid}/></td>
+                        <td><ShowSellAmount hrid={hrid} count={count}/></td>
+                    </MarketDataContext.Provider>)}
             </tr>)}
             {
                 showOthers ?
                     others.map(({hrid, count}) => <tr key={hrid}>
-                        <th>{getItemName(hrid)}</th>
+                        <th><ShowItem hrid={hrid}/></th>
                         <td><ShowNumber value={count}/></td>
-                        {history.map(marketData => {
-                            const price = getSellPriceByHrid(hrid, 0, marketData);
-                            return <Fragment key={marketData.timestamp}>
-                                <td><ShowNumber value={price}/></td>
-                                <td><ShowNumber value={price * count}/></td>
-                            </Fragment>;
-                        })}
+                        {history.map(marketData =>
+                            <MarketDataContext.Provider key={marketData.timestamp} value={marketData}>
+                                <td><ShowSellPrice hrid={hrid}/></td>
+                                <td><ShowSellAmount hrid={hrid} count={count}/></td>
+                            </MarketDataContext.Provider>)}
                     </tr>)
                     : <tr>
                         <th colSpan={2}>

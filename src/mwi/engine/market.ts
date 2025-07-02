@@ -40,7 +40,7 @@ function getPriceByHrid(hrid: string, field: "a" | "b", enhancementLevel: number
         // Coin is always 1
         return 1;
     }
-    if (getMarketData().marketData[hrid] === undefined) {
+    if (marketData.marketData[hrid] === undefined) {
         if (isItemOpenable(hrid)) {
             const openableItem = getOpenableItem(hrid)!;
             const otherSellAmount = Object.entries(openableItem.drops).reduce((acc, [dropHrid, dropCount]) => acc +
@@ -50,7 +50,7 @@ function getPriceByHrid(hrid: string, field: "a" | "b", enhancementLevel: number
         }
         return 0;
     }
-    return getMarketData().marketData[hrid][enhancementLevel.toString()]?.[field] ?? -1;
+    return marketData.marketData[hrid][enhancementLevel.toString()]?.[field] ?? -1;
 }
 
 export const MarketData$ = new ReplaySubject<MarketData>(1);
