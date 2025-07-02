@@ -1,28 +1,41 @@
 import * as React from "react";
 import {uniqueStrings} from "../../shared/list";
 import {useLatestValue} from "../../shared/rxjs-react";
+import {ShowItem} from "../component/item";
 import {ShowNumber, ShowPercent} from "../component/number";
+import {ShowStoreActions} from "../component/store";
 import {getActionName} from "../engine/action";
 
 import {ActionCompleteEvent, type ActionCompleteEventData, AllLoadedEvent} from "../engine/engine-event";
-import {getItemName} from "../engine/item";
-import {createCharacterStore, StoreMode} from "../engine/store";
-import {loadSettings, saveSettings, useSettings} from "../settings";
+import {type StoreDefine, storeSubject} from "../engine/store";
 import {AddView} from "../view";
 
 
-const store = createCharacterStore<ActionCompleteEventData[]>("action-stat.events", StoreMode.Local);
+const ActionStatStore: StoreDefine<ActionCompleteEventData[]> = {
+    id: "action-stat",
+    name: "Action Stat",
+    characterBased: true,
+    enableSettings: true,
+    defaultValue: [],
+}
+
+const ActionStat$ = storeSubject(ActionStatStore);
+ActionCompleteEvent.subscribe((event) => {
+    if (event.count === 0) {
+        return;
+    }
+    ActionStat$.next([...ActionStat$.getValue(), event]);
+});
 
 export function actionStatPlugin() {
     migration();
-    setupEventsStore();
     AllLoadedEvent.subscribe({
         complete: () => {
             AddView({
                 id: "action-stat",
                 name: "Action Stat",
                 node: <>
-                    <ShowStoreInfo/>
+                    <ShowStoreActions store={ActionStatStore}/>
                     <ShowActionStat/>
                 </>,
             });
@@ -31,49 +44,33 @@ export function actionStatPlugin() {
 }
 
 function migration() {
-    // Clear previous stored data
-    const legacy = JSON.parse(GM_getValue("action-stat.store", "[]"))
+    let legacy: ActionCompleteEventData[] = JSON.parse(GM_getValue("character-store.action-stat.events", "[]"))
     if (legacy) {
-        store.data = legacy
-        GM_setValue("action-stat.store", "[]");
+        GM_deleteValue("character-store.action-stat.events");
+        if (legacy.find(it => [it.added, it.removed].find(it => (it as any).itemHrid))) {
+            // Migrate from itemHrid to hrid
+            legacy = legacy.map(it => {
+                return {
+                    ...it,
+                    added: it.added.map(it => ({
+                        hrid: (it as any).itemHrid ?? it.hrid,
+                        level: it.level ?? 0,
+                        count: it.count
+                    })),
+                    removed: it.removed.map(it => ({
+                        hrid: (it as any).itemHrid ?? it.hrid,
+                        level: it.level ?? 0,
+                        count: it.count
+                    })),
+                }
+            })
+        }
+        ActionStat$.next(legacy);
     }
 }
 
-
-function setupEventsStore() {
-    ActionCompleteEvent.subscribe((event) => {
-        if (!loadSettings("action-stat.store.enable", false)) {
-            return;
-        }
-        if (event.count === 0) {
-            return;
-        }
-        store.data = [...store.data, event];
-    });
-}
-
-
-function ShowStoreInfo() {
-    const events = useLatestValue(store.dataSubject) ?? [];
-
-    const enable = useSettings("action-stat.store.enable", false);
-    return <div>
-        Action Stat store
-        <input type="checkbox" checked={enable} onChange={(e) => saveSettings("action-stat.store.enable",
-            e.target.checked)}/>
-        Records: <ShowNumber value={events.length}/>
-        <button onClick={() => store.data = []}>Clear</button>
-        <button onClick={() => exportStore()}>Save as</button>
-    </div>
-}
-
-function exportStore() {
-    const blob = new Blob([JSON.stringify(store.data)], {type: "application/json;charset=utf-8"});
-    window.open(window.URL.createObjectURL(blob));
-}
-
 function ShowActionStat() {
-    const events = useLatestValue(store.dataSubject) ?? [];
+    const events = useLatestValue(ActionStat$) ?? [];
 
     if (events.length === 0) {
         return <>
@@ -82,7 +79,7 @@ function ShowActionStat() {
     }
 
     const groupedAction = events.reduce((map, event) => {
-        const action = getActionName(event.hrid);
+        const action = event.hrid;
         if (action in map) {
             map[action].push(event);
         } else {
@@ -101,7 +98,12 @@ function ShowActionStat() {
         </thead>
         <tbody>
         {Object.entries(groupedAction).map(([hrid, events]) => <tr key={hrid}>
-            <th>{getActionName(hrid)}</th>
+            <th>
+                {getActionName(hrid)}
+                <button onClick={() => ActionStat$.next(ActionStat$.getValue().filter(it => it.hrid !== hrid))}>
+                    x
+                </button>
+            </th>
             <ShowEfficiencyStat events={events}/>
             <ShowEventStats events={events}/>
         </tr>)}
@@ -163,13 +165,13 @@ export function ShowEfficiencyStat({events}: { events: ActionCompleteEventData[]
 }
 
 export function ShowEventStats({events}: { events: ActionCompleteEventData[] }) {
-    const items = uniqueStrings(events.flatMap(it => [...it.added, ...it.removed].map(it => it.itemHrid)))
+    const items = uniqueStrings(events.flatMap(it => [...it.added, ...it.removed].map(it => it.hrid)))
     return <td>
         <table>
             <thead>
             <tr>
                 {items.map(hrid =>
-                    <th key={hrid}>{getItemName(hrid)}</th>)}
+                    <th key={hrid}><ShowItem hrid={hrid}/></th>)}
             </tr>
             </thead>
             <tbody>
@@ -195,7 +197,7 @@ function ShowItemStat({itemHrid, events}: { itemHrid: string, events: ActionComp
     }[] = []
     const subtotalActions: Record<number, number> = {};
     events.forEach(event => {
-        const itemCount = [...event.added, ...event.removed].find(item => item.itemHrid === itemHrid)?.count ?? 0;
+        const itemCount = [...event.added, ...event.removed].find(item => item.hrid === itemHrid)?.count ?? 0;
         let row = rows.find(row => row.action === event.count && row.itemCount === itemCount)
         if (!row) {
             row = {

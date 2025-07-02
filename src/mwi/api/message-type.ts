@@ -1,10 +1,8 @@
 import type {ActionCategoryDetails, ActionData, ActionDetails, DropInfo} from "./action-type";
-import type {BuffTypeDetails, CommunityBuffTypeDetails} from "./buff-type";
+import type {BuffDetails, BuffTypeDetails, CommunityBuffTypeDetails, NoncombatBuffs} from "./buff-type";
 import type {
-    Buff,
     Character,
     CharacterAbility,
-    CharacterAction,
     CharacterFoodDrinkSlot,
     CharacterHouseRoom,
     CharacterInfo,
@@ -13,8 +11,7 @@ import type {
     CharacterQuest,
     CharacterSetting,
     CharacterSkill,
-    CombatUnit,
-    NoncombatStats
+    CombatUnit
 } from "./character-type";
 import type {
     AbilityDetails,
@@ -78,7 +75,7 @@ export interface InitCharacterData {
     character: Character
     characterInfo: CharacterInfo
     characterSetting: CharacterSetting
-    characterActions: CharacterAction[]
+    characterActions: ActionData[]
     characterQuests: CharacterQuest[]
     characterSkills: CharacterSkill[]
     characterAbilities: CharacterAbility[]
@@ -88,15 +85,16 @@ export interface InitCharacterData {
     actionTypeFoodSlotsMap: Record<string, (CharacterFoodDrinkSlot | null)[]>
     characterLoadoutMap: Record<string, CharacterLoadout>
     combatUnit: CombatUnit
-    noncombatStats: NoncombatStats
+    noncombatStats: NoncombatBuffs
     characterHouseRoomMap: Record<string, CharacterHouseRoom>
     chatHistoryByChannelMap: Record<string, any[]>
     actionTypeDrinkSlotsMap: Record<string, (CharacterFoodDrinkSlot | null)[]>
-    mooPassActionTypeBuffsMap: Record<string, Buff[]>
-    communityActionTypeBuffsMap: Record<string, Buff[]>
-    houseActionTypeBuffsMap: Record<string, Buff[]>
-    consumableActionTypeBuffsMap: Record<string, Buff[]>
-    equipmentActionTypeBuffsMap: Record<string, Buff[]>
+    mooPassActionTypeBuffsMap: Record<string, BuffDetails[]>
+    communityActionTypeBuffsMap: Record<string, BuffDetails[]>
+    houseActionTypeBuffsMap: Record<string, BuffDetails[]>
+    consumableActionTypeBuffsMap: Record<string, BuffDetails[]>
+    equipmentActionTypeBuffsMap: Record<string, BuffDetails[]>
+    offlineItems: CharacterItem[]
 }
 
 
@@ -112,4 +110,14 @@ export interface ActionCompletedData {
     endCharacterAbilities: CharacterAbility[] | null
     endCharacterSkills: CharacterSkill[] | null
     endCharacterQuests: CharacterQuest[] | null
+}
+
+export interface ItemUpdatedData {
+    type: "items_updated"
+    endCharacterItems: CharacterItem[] | null
+}
+
+export interface ActionsUpdatedData {
+    type: "actions_updated"
+    endCharacterActions: ActionData[]
 }

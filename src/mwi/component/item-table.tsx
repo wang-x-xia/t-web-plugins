@@ -1,10 +1,12 @@
 import * as React from "react";
-import {getItemName} from "../engine/item";
+import {useState} from "react";
+import {sum} from "../../shared/list";
 import {getBuyPriceByHrid, getSellPriceByHrid} from "../engine/market";
+import {ShowItem} from "./item";
 import {ShowNumber, ShowPercent} from "./number";
 
 export interface ItemRow {
-    name: string,
+    hrid: string,
     enhancementLevel: number,
     count: number,
     price: number,
@@ -35,7 +37,7 @@ function prepareItems(inputs: ItemInput[], priceFunc: (hrid: string, enhancement
     const items = inputs.map((input) => {
         const price = priceFunc(input.hrid, input.enhancementLevel ?? 0);
         return ({
-            name: getItemName(input.hrid),
+            hrid: input.hrid,
             enhancementLevel: input.enhancementLevel ?? 0,
             count: input.count,
             price,
@@ -48,6 +50,31 @@ function prepareItems(inputs: ItemInput[], priceFunc: (hrid: string, enhancement
     return {items, total,};
 }
 
+export function BuyItemTable({items, defaultExpand}: { items: ItemInput[], defaultExpand?: boolean }) {
+    const {items: preparedItems} = prepareBuyItems(items);
+    return <ExpandableItemTable items={preparedItems} defaultExpand={defaultExpand}/>;
+}
+
+export function SellItemTable({items, defaultExpand}: { items: ItemInput[], defaultExpand?: boolean }) {
+    const {items: preparedItems} = prepareSellItems(items);
+    return <ExpandableItemTable items={preparedItems} defaultExpand={defaultExpand}/>;
+}
+
+export function ExpandableItemTable({items, defaultExpand}: { items: ItemRow[], defaultExpand?: boolean }) {
+    const [expanded, setExpanded] = useState(defaultExpand ?? false);
+
+    if (expanded) {
+        return <>
+            <button onClick={() => setExpanded(!expanded)}>-</button>
+            <ItemTable items={items}/>
+        </>
+    } else {
+        return <>
+            <button onClick={() => setExpanded(!expanded)}>+</button>
+            <ShowNumber value={sum(items.map(item => item.subtotal))}/>
+        </>
+    }
+}
 
 export function ItemTable({items}: { items: ItemRow[] }) {
     if (items.length === 0) {
@@ -64,8 +91,8 @@ export function ItemTable({items}: { items: ItemRow[] }) {
         </tr>
         </thead>
         <tbody>
-        {items.map((row) => <tr key={row.name}>
-            <td>{row.name}{row.enhancementLevel > 0 && `+${row.enhancementLevel}`}</td>
+        {items.map((row) => <tr key={`${row.hrid}-${row.enhancementLevel}`}>
+            <td><ShowItem hrid={row.hrid} enhancementLevel={row.enhancementLevel}/></td>
             <td><ShowNumber value={row.count}/></td>
             <td><ShowNumber value={row.price}/></td>
             <td><ShowNumber value={row.subtotal}/></td>

@@ -59,3 +59,31 @@ export function formatWithSuffixes(num: number): string {
     }
     return formatWithThousandsSeparators(num);
 }
+
+export function ShowSize({value}: { value: number }) {
+    return <>{formatSize(value)}</>;
+}
+
+export function formatSize(num: number): string {
+    if (num === 0) {
+        return '0';
+    }
+    const absNum = Math.abs(num);
+    if (absNum >= 1e13) {
+        // >= 10TB
+        return formatWithThousandsSeparators(num / 1e12) + 'TB';
+    }
+    if (absNum >= 1e10) {
+        // >= 10GB
+        return formatWithThousandsSeparators(num / 1e9) + 'GB';
+    }
+    if (absNum >= 1e7) {
+        // >= 10MB
+        return formatWithThousandsSeparators(num / 1e6) + 'MB';
+    }
+    if (absNum >= 1e4) {
+        // >= 10KB
+        return formatWithThousandsSeparators(num / 1e3) + 'KB';
+    }
+    return formatWithThousandsSeparators(num);
+}

@@ -1,60 +1,57 @@
-import {getBuffsByEquipmentItemHrid} from "./buff";
-import type {BasicBuff} from "./buff-type";
 import {InitCharacterSubject} from "./engine-event";
-import {createCharacterStore} from "./store";
+import {type StoreDefine, storeSubject} from "./store";
 
 export enum EquipmentTool {
-    AlchemyTool = "alchemy_tool",
-    BrewingTool = "brewing_tool",
-    CheesesmithingTool = "cheesesmithing_tool",
-    CookingTool = "cooking_tool",
-    CraftingTool = "crafting_tool",
-    EnhancingTool = "enhancing_tool",
-    ForagingTool = "foraging_tool",
-    MilkingTool = "milking_tool",
-    TailoringTool = "tailoring_tool",
-    WoodcuttingTool = "woodcutting_tool",
+    AlchemyTool = "/item_locations/alchemy_tool",
+    BrewingTool = "/item_locations/brewing_tool",
+    CheesesmithingTool = "/item_locations/cheesesmithing_tool",
+    CookingTool = "/item_locations/cooking_tool",
+    CraftingTool = "/item_locations/crafting_tool",
+    EnhancingTool = "/item_locations/enhancing_tool",
+    ForagingTool = "/item_locations/foraging_tool",
+    MilkingTool = "/item_locations/milking_tool",
+    TailoringTool = "/item_locations/tailoring_tool",
+    WoodcuttingTool = "/item_locations/woodcutting_tool",
 }
 
 export enum EquipmentLocation {
-    Back = "back",
-    Body = "body",
-    Earrings = "earrings",
-    Feet = "feet",
-    Hands = "hands",
-    Head = "head",
-    Legs = "legs",
-    MainHand = "main_hand",
-    Neck = "neck",
-    OffHand = "off_hand",
-    Pouch = "pouch",
-    Ring = "ring",
-    Trinket = "trinket",
-    TwoHand = "two_hand",
+    Back = "/item_locations/back",
+    Body = "/item_locations/body",
+    Earrings = "/item_locations/earrings",
+    Feet = "/item_locations/feet",
+    Hands = "/item_locations/hands",
+    Head = "/item_locations/head",
+    Legs = "/item_locations/legs",
+    MainHand = "/item_locations/main_hand",
+    Neck = "/item_locations/neck",
+    OffHand = "/item_locations/off_hand",
+    Pouch = "/item_locations/pouch",
+    Ring = "/item_locations/ring",
+    Trinket = "/item_locations/trinket",
+    TwoHand = "/item_locations/two_hand",
 }
 
 export interface EquipmentItem {
     location: EquipmentLocation | EquipmentTool
     itemHrid: string
     enhancementLevel: number
-    buffs: BasicBuff[]
 }
 
-export function getEquipmentLocationHrid(location: EquipmentLocation | EquipmentTool): string {
-    return `/item_locations/${location}`
-}
 
 export function getEquipmentLocationByHrid(hrid: string): EquipmentLocation | EquipmentTool | null {
-    return Object.values(EquipmentLocation).find((location) => getEquipmentLocationHrid(location) === hrid) ||
-        Object.values(EquipmentTool).find((tool) => getEquipmentLocationHrid(tool) === hrid) || null;
+    return Object.values(EquipmentLocation).find((location) => location === hrid) ||
+        Object.values(EquipmentTool).find((tool) => tool === hrid) || null;
 }
 
-const store = createCharacterStore<Record<EquipmentLocation | EquipmentTool, EquipmentItem>>("equipment");
-
-export function equipmentStore() {
-    return store;
+const EquipmentStore: StoreDefine<Record<EquipmentLocation | EquipmentTool, EquipmentItem>> = {
+    id: "equipment",
+    name: "Equipment",
+    characterBased: true,
+    enableSettings: true,
+    defaultValue: {} as Record<EquipmentLocation | EquipmentTool, EquipmentItem>,
 }
 
+export const Equipments$ = storeSubject(EquipmentStore);
 InitCharacterSubject.subscribe((data) => {
     const localEquipment = {} as Record<EquipmentLocation | EquipmentTool, EquipmentItem>;
     Object.values(data.characterItems).forEach((item) => {
@@ -66,8 +63,7 @@ InitCharacterSubject.subscribe((data) => {
             location,
             itemHrid: item.itemHrid,
             enhancementLevel: item.enhancementLevel,
-            buffs: getBuffsByEquipmentItemHrid(item.itemHrid, item.enhancementLevel),
         };
     });
-    store.data = localEquipment;
+    Equipments$.next(localEquipment);
 });

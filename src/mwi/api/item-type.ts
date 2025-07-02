@@ -1,6 +1,5 @@
 import type {DropInfo} from "./action-type";
-import type {BuffUniqueDetails} from "./buff-type";
-import type {NoncombatStats} from "./character-type";
+import type {BuffDetails, NoncombatBuffs} from "./buff-type";
 import type {HridInfo, ItemCount, LevelRequirement} from "./common-type";
 
 export interface ItemDetails extends HridInfo {
@@ -13,7 +12,7 @@ export interface ItemDetails extends HridInfo {
     consumableDetail?: {
         cooldownDuration: number
         usableInActionTypeMap: Record<string, true>
-        buffs: BuffUniqueDetails[] | null,
+        buffs: BuffDetails[] | null,
     }
     alchemyDetail?: {
         bulkMultiplier: number
@@ -26,9 +25,9 @@ export interface ItemDetails extends HridInfo {
         type: string
         levelRequirement: LevelRequirement[]
         combatStats: any
-        noncombatStats: NoncombatStats
+        noncombatStats: NoncombatBuffs
         combatEnhancementBonuses: Record<string, number>
-        noncombatEnhancementBonuses: NoncombatStats
+        noncombatEnhancementBonuses: NoncombatBuffs
     }
 
     [key: string]: any

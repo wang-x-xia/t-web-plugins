@@ -1,7 +1,18 @@
 import {log} from "../../shared/log";
 import type {ActionCompletedData} from "../api/message-type";
-import {updateCurrentActionData} from "./character";
-import {ActionCompleteEvent, InitCharacterSubject, InitClientSubject, LootLogSubject} from "./engine-event";
+import {updateActionData} from "./action-queue";
+import {
+    ActionCompleteData$,
+    ActionCompleteEvent,
+    ActionsUpdatedData$,
+    ClaimCharacterQuest$,
+    ClaimMarketListing$,
+    InitCharacterData$,
+    InitClientSubject,
+    ItemUpdatedData$,
+    LootLogData$,
+    PostMarketOrder$
+} from "./engine-event";
 import {updateInventory} from "./inventory";
 
 export function setupEngineHook() {
@@ -10,47 +21,85 @@ export function setupEngineHook() {
             log("ws-created", {"args": args});
             const ws = new target(...args);
             ws.addEventListener("message", (event) => {
-                processMessage(JSON.parse(event.data));
+                processResponse(JSON.parse(event.data));
             });
+            const _send = ws.send.bind(ws);
+            ws.send = (data: any) => {
+                processRequest(JSON.parse(data));
+                _send(data);
+            };
             return ws;
-        }
+        },
     });
     log("ws-hooked", {});
     if (localStorage.getItem("initClientData") != null) {
-        processMessage(JSON.parse(localStorage.getItem("initClientData")!!));
+        processResponse(JSON.parse(localStorage.getItem("initClientData")!!));
     }
 }
 
-
-function processMessage(data: any) {
+function processRequest(data: any) {
     if (!data.hasOwnProperty("type") || typeof data.type !== "string") {
         // ignore unknown messages
         return;
     }
-    if (data.type === "chat_message_received") {
+    if (["ping"].includes(data.type)) {
         // ignore chat messages
         return;
     }
-    log("handle-message", {"type": data.type, "data": data});
+    log("handle-request", {"type": data.type, "data": data});
     switch (data.type) {
+        case "claim_character_quest":
+            ClaimCharacterQuest$.next(data);
+            break;
+        case "claim_market_listing":
+            ClaimMarketListing$.next(data);
+            break;
+        case "post_market_order":
+            PostMarketOrder$.next(data);
+            break;
+    }
+}
+
+
+function processResponse(data: any) {
+    if (!data.hasOwnProperty("type") || typeof data.type !== "string") {
+        // ignore unknown messages
+        return;
+    }
+    if (["chat_message_updated", "chat_message_received", "pong"].includes(data.type)) {
+        // ignore chat messages
+        return;
+    }
+    log("handle-response", {"type": data.type, "data": data});
+    switch (data.type) {
+        case "action_completed":
+            ActionCompleteData$.next(data);
+            processActionComplete(data);
+            break;
+        case "actions_updated":
+            ActionsUpdatedData$.next(data);
+            break;
         case "init_character_data":
-            InitCharacterSubject.next(data);
+            InitCharacterData$.next(data);
             break;
         case "init_client_data":
             InitClientSubject.next(data);
             break;
-        case "loot_log_updated":
-            LootLogSubject.next(data);
+        case "items_updated":
+            ItemUpdatedData$.next(data);
             break;
-        case "action_completed":
-            processActionComplete(data);
+        case "loot_log_updated":
+            LootLogData$.next(data);
             break;
     }
 }
 
 function processActionComplete(data: ActionCompletedData) {
-    const count = updateCurrentActionData(data.endCharacterAction);
-    const {added, removed} = updateInventory(data.endCharacterItems ?? []);
+    const count = updateActionData(data.endCharacterAction);
+    const {added, removed} = updateInventory(data.endCharacterItems ?? [], {
+        type: "action",
+        action: data.endCharacterAction.actionHrid,
+    });
     ActionCompleteEvent.next({
         hrid: data.endCharacterAction.actionHrid,
         updatedAt: data.endCharacterAction.updatedAt,
