@@ -1,12 +1,12 @@
 import * as React from "react";
 import {uniqueStrings} from "../../shared/list";
 import {useLatestValue} from "../../shared/rxjs-react";
+import {ShowItem} from "../component/item";
 import {ShowNumber, ShowPercent} from "../component/number";
 import {ShowStoreActions} from "../component/store";
 import {getActionName} from "../engine/action";
 
 import {ActionCompleteEvent, type ActionCompleteEventData, AllLoadedEvent} from "../engine/engine-event";
-import {getItemName} from "../engine/item";
 import {type StoreDefine, storeSubject} from "../engine/store";
 import {AddView} from "../view";
 
@@ -171,7 +171,7 @@ export function ShowEventStats({events}: { events: ActionCompleteEventData[] }) 
             <thead>
             <tr>
                 {items.map(hrid =>
-                    <th key={hrid}>{getItemName(hrid)}</th>)}
+                    <th key={hrid}><ShowItem hrid={hrid}/></th>)}
             </tr>
             </thead>
             <tbody>

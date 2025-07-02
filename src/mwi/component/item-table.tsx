@@ -1,12 +1,12 @@
 import * as React from "react";
 import {useState} from "react";
 import {sum} from "../../shared/list";
-import {getItemName} from "../engine/item";
 import {getBuyPriceByHrid, getSellPriceByHrid} from "../engine/market";
+import {ShowItem} from "./item";
 import {ShowNumber, ShowPercent} from "./number";
 
 export interface ItemRow {
-    name: string,
+    hrid: string,
     enhancementLevel: number,
     count: number,
     price: number,
@@ -37,7 +37,7 @@ function prepareItems(inputs: ItemInput[], priceFunc: (hrid: string, enhancement
     const items = inputs.map((input) => {
         const price = priceFunc(input.hrid, input.enhancementLevel ?? 0);
         return ({
-            name: getItemName(input.hrid),
+            hrid: input.hrid,
             enhancementLevel: input.enhancementLevel ?? 0,
             count: input.count,
             price,
@@ -91,8 +91,8 @@ export function ItemTable({items}: { items: ItemRow[] }) {
         </tr>
         </thead>
         <tbody>
-        {items.map((row) => <tr key={row.name}>
-            <td>{row.name}{row.enhancementLevel > 0 && `+${row.enhancementLevel}`}</td>
+        {items.map((row) => <tr key={`${row.hrid}-${row.enhancementLevel}`}>
+            <td><ShowItem hrid={row.hrid} enhancementLevel={row.enhancementLevel}/></td>
             <td><ShowNumber value={row.count}/></td>
             <td><ShowNumber value={row.price}/></td>
             <td><ShowNumber value={row.subtotal}/></td>
