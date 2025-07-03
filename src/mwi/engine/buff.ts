@@ -5,6 +5,17 @@ import {type AnyActionType, EnhancingActionType} from "./action";
 import {type AnyBuffType, EnhancingBuffType, NormalBuffType} from "./buff-type";
 import {getClientData} from "./client";
 
+
+export const EmptyBuffData: Record<AnyBuffType, number> = {
+    [NormalBuffType.ActionSpeed]: 0,
+    [NormalBuffType.Efficiency]: 0,
+    [NormalBuffType.Gathering]: 0,
+    [NormalBuffType.Wisdom]: 0,
+    [NormalBuffType.RareFind]: 0,
+    [NormalBuffType.EssenceFind]: 0,
+    [EnhancingBuffType.EnhancingSuccess]: 0,
+}
+
 export function getBuffTypeName(action: AnyBuffType) {
     return getClientData().buffTypeDetailMap[action].name
 }

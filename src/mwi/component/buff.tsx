@@ -4,7 +4,7 @@ import {map, of} from "rxjs";
 import {sum} from "../../shared/list";
 import {useLatestOrDefault} from "../../shared/rxjs-react";
 import {type AnyActionType, CombatActionType, EnhancingActionType} from "../engine/action";
-import {getBuffTypeName, getBuffValueOfEquipment, getBuffValueOfTea} from "../engine/buff";
+import {EmptyBuffData, getBuffTypeName, getBuffValueOfEquipment, getBuffValueOfTea} from "../engine/buff";
 import {type AnyBuffType, BuffSource, EnhancingBuffType, NormalBuffType} from "../engine/buff-type";
 import {InitCharacterSubject} from "../engine/engine-event";
 import {Equipments$} from "../engine/equipment";
@@ -30,15 +30,7 @@ export function useBuffData(actionType: AnyActionType, levelRequirement: number)
     buffData: Record<AnyBuffType, number>,
     BuffTable: FunctionComponent
 } {
-    const [buffData, setBuffData] = useState<Record<AnyBuffType, number>>({
-        [NormalBuffType.ActionSpeed]: 0,
-        [NormalBuffType.Efficiency]: 0,
-        [NormalBuffType.Gathering]: 0,
-        [NormalBuffType.Wisdom]: 0,
-        [NormalBuffType.RareFind]: 0,
-        [NormalBuffType.EssenceFind]: 0,
-        [EnhancingBuffType.EnhancingSuccess]: 0,
-    })
+    const [buffData, setBuffData] = useState(EmptyBuffData);
 
     const contextData: BuffContextData = useMemo(() => {
         return {
