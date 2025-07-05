@@ -1,3 +1,4 @@
+import type {Subject} from "rxjs";
 import {log} from "../../shared/log";
 import type {ActionCompletedData} from "../api/message-type";
 import {updateActionData} from "./action-queue";
@@ -5,12 +6,16 @@ import {
     ActionCompleteData$,
     ActionCompleteEvent,
     ActionsUpdatedData$,
+    BuyMooPassWithCowbells$,
+    ClaimAllMarketListings$,
     ClaimCharacterQuest$,
     ClaimMarketListing$,
     InitCharacterData$,
     InitClientSubject,
     ItemUpdatedData$,
     LootLogData$,
+    LootOpened$,
+    OpenLoot$,
     PostMarketOrder$
 } from "./engine-event";
 import {updateInventory} from "./inventory";
@@ -47,17 +52,12 @@ function processRequest(data: any) {
         return;
     }
     log("handle-request", {"type": data.type, "data": data});
-    switch (data.type) {
-        case "claim_character_quest":
-            ClaimCharacterQuest$.next(data);
-            break;
-        case "claim_market_listing":
-            ClaimMarketListing$.next(data);
-            break;
-        case "post_market_order":
-            PostMarketOrder$.next(data);
-            break;
-    }
+    tryPublish(data, BuyMooPassWithCowbells$, "buy_moo_pass_with_cowbells") ||
+    tryPublish(data, ClaimAllMarketListings$, "claim_all_market_listings") ||
+    tryPublish(data, ClaimCharacterQuest$, "claim_character_quest") ||
+    tryPublish(data, ClaimMarketListing$, "claim_market_listing") ||
+    tryPublish(data, OpenLoot$, "open_loot") ||
+    tryPublish(data, PostMarketOrder$, "post_market_order");
 }
 
 
@@ -71,28 +71,27 @@ function processResponse(data: any) {
         return;
     }
     log("handle-response", {"type": data.type, "data": data});
-    switch (data.type) {
-        case "action_completed":
-            ActionCompleteData$.next(data);
-            processActionComplete(data);
-            break;
-        case "actions_updated":
-            ActionsUpdatedData$.next(data);
-            break;
-        case "init_character_data":
-            InitCharacterData$.next(data);
-            break;
-        case "init_client_data":
-            InitClientSubject.next(data);
-            break;
-        case "items_updated":
-            ItemUpdatedData$.next(data);
-            break;
-        case "loot_log_updated":
-            LootLogData$.next(data);
-            break;
+    if (tryPublish(data, ActionCompleteData$, "action_completed")) {
+        processActionComplete(data);
+        return;
     }
+    tryPublish(data, ActionsUpdatedData$, "actions_updated") ||
+    tryPublish(data, InitCharacterData$, "init_character_data") ||
+    tryPublish(data, InitClientSubject, "init_client_data") ||
+    tryPublish(data, ItemUpdatedData$, "items_updated") ||
+    tryPublish(data, LootLogData$, "loot_log_updated") ||
+    tryPublish(data, LootOpened$, "loot_opened");
 }
+
+
+function tryPublish<T extends { type: string }>(data: any, source: Subject<T>, type: T["type"]): boolean {
+    if (data.type !== type) {
+        return false;
+    }
+    source.next(data);
+    return true;
+}
+
 
 function processActionComplete(data: ActionCompletedData) {
     const count = updateActionData(data.endCharacterAction);
