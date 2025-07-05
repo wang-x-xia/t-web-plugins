@@ -121,3 +121,9 @@ export interface ActionsUpdatedData {
     type: "actions_updated"
     endCharacterActions: ActionData[]
 }
+
+export interface LootOpened {
+    type: "loot_opened"
+    openedItem: CharacterItem
+    gainedItems: CharacterItem[]
+}

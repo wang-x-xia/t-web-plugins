@@ -5,13 +5,16 @@ import {OfflineChanges$} from "./action-queue";
 import {type WithCharacterId} from "./character";
 import {
     ActionCompleteData$,
+    BuyMooPassWithCowbells$,
     ClaimAllMarketListings$,
     ClaimCharacterQuest$,
     ClaimMarketListing$,
     InitCharacterData$,
     ItemUpdatedData$,
+    OpenLoot$,
     PostMarketOrder$
 } from "./engine-event";
+import {getItemCategory, ItemCategory} from "./item";
 
 
 export interface InventoryData extends WithCharacterId {
@@ -59,12 +62,19 @@ export type ItemChangeCause = {
     "type": "unknown",
 } | {
     "type": "quest",
+} | {
+    "type": "loot",
+} | {
+    "type": "cowbell-store",
 }
 
 const ItemChangeCause$ = new BehaviorSubject<ItemChangeCause>({"type": "unknown"});
 ActionCompleteData$.subscribe(({endCharacterAction}) => {
-    // This is the changes for tea
+    // This is the changes for food and drink
     ItemChangeCause$.next({"type": "action", "action": endCharacterAction.actionHrid});
+})
+BuyMooPassWithCowbells$.subscribe(() => {
+    ItemChangeCause$.next({"type": "cowbell-store"});
 })
 ClaimAllMarketListings$.subscribe(() => {
     ItemChangeCause$.next({"type": "market"});
@@ -78,6 +88,9 @@ PostMarketOrder$.subscribe(() => {
 ClaimCharacterQuest$.subscribe(() => {
     ItemChangeCause$.next({"type": "quest"});
 })
+OpenLoot$.subscribe(() => {
+    ItemChangeCause$.next({"type": "loot"});
+})
 
 
 export interface ItemChangesData {
@@ -85,7 +98,11 @@ export interface ItemChangesData {
     removed: ItemChange[];
 }
 
-export function mergeItemChangesData(left: ItemChangesData, right: ItemChangesData): ItemChangesData {
+export function mergeItemChangesData(left: ItemChangesData | undefined, right: ItemChangesData): ItemChangesData {
+    if (!left) {
+        return right;
+    }
+
     function mergeItemChangeData(left: ItemChange[], right: ItemChange[]): ItemChange[] {
         const total = jsonCopy(left)
         for (const item of right) {
@@ -142,7 +159,15 @@ ItemUpdatedData$.subscribe(({endCharacterItems}) => {
     if (endCharacterItems === null) {
         return
     }
-    updateInventory(endCharacterItems, ItemChangeCause$.getValue());
+    let cause = ItemChangeCause$.getValue();
+    if (cause.type === "action") {
+        // Post checker of drink and food
+        if (!endCharacterItems.every(it => [ItemCategory.Drink, ItemCategory.Food].includes(getItemCategory(it.itemHrid)))) {
+            // Some items are not tea or food
+            cause = {"type": "unknown"}
+        }
+    }
+    updateInventory(endCharacterItems, cause);
     ItemChangeCause$.next({"type": "unknown"});
 })
 
