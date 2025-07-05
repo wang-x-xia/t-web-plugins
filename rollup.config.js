@@ -4,6 +4,7 @@ import replace from '@rollup/plugin-replace';
 import typescript from "@rollup/plugin-typescript";
 import fs from 'fs/promises';
 import postcss from 'rollup-plugin-postcss'
+import sizes from 'rollup-plugin-sizes';
 
 export default {
     input: "src/mwi/main.ts",
@@ -25,5 +26,6 @@ export default {
         }),
         typescript(),
         postcss(),
+        sizes(),
     ],
 }

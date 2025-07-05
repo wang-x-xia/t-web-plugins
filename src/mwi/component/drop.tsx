@@ -1,10 +1,10 @@
-import {combinations} from "mathjs";
 import * as React from "react";
 import {createContext, useContext, useEffect, useMemo, useState} from "react";
 import {CartesianGrid, Line, LineChart, ReferenceLine, Tooltip, XAxis, YAxis} from "recharts";
 import {Expandable, LazyExpandable} from "../../shared/expand";
 import {createGroupOpContext, useChildId, useGroupData} from "../../shared/group";
 import {sum} from "../../shared/list";
+import {combination} from "../../shared/math";
 import type {DropInfo} from "../api/action-type";
 import type {ItemCount} from "../api/common-type";
 import {EmptyBuffData} from "../engine/buff";
@@ -204,7 +204,7 @@ export function ShowLuckyIncome({hrid, rate, onCountChange, onIncomeChange}: {
     const count = useMemo(() => {
         let totalPercent = 0
         for (let count = 0; count < times; count++) {
-            totalPercent += combinations(times, count) * Math.pow(rate, count) * Math.pow(1 - rate, times - count);
+            totalPercent += combination(times, count) * Math.pow(rate, count) * Math.pow(1 - rate, times - count);
             if (totalPercent >= lucky) {
                 return count;
             }
@@ -226,7 +226,7 @@ export function ShowLuckyDistribution({times, rate, lucky}: { times: number, rat
     const unit = 0.005
     let total = 0
     for (let k = 0; k < times && (current + 1) * unit <= 1; k++) {
-        total += combinations(times, k) * Math.pow(rate, k) * Math.pow(1 - rate, times - k);
+        total += combination(times, k) * Math.pow(rate, k) * Math.pow(1 - rate, times - k);
         while (current * unit < total) {
             value.push({
                 count: k,
