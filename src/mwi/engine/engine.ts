@@ -5,12 +5,16 @@ import {
     ActionCompleteData$,
     ActionCompleteEvent,
     ActionsUpdatedData$,
+    BuyMooPassWithCowbells$,
+    ClaimAllMarketListings$,
     ClaimCharacterQuest$,
     ClaimMarketListing$,
     InitCharacterData$,
     InitClientSubject,
     ItemUpdatedData$,
     LootLogData$,
+    LootOpened$,
+    OpenLoot$,
     PostMarketOrder$
 } from "./engine-event";
 import {updateInventory} from "./inventory";
@@ -48,11 +52,20 @@ function processRequest(data: any) {
     }
     log("handle-request", {"type": data.type, "data": data});
     switch (data.type) {
+        case "buy_moo_pass_with_cowbells":
+            BuyMooPassWithCowbells$.next(data);
+            break;
+        case "claim_all_market_listings":
+            ClaimAllMarketListings$.next(data);
+            break;
         case "claim_character_quest":
             ClaimCharacterQuest$.next(data);
             break;
         case "claim_market_listing":
             ClaimMarketListing$.next(data);
+            break;
+        case "open_loot":
+            OpenLoot$.next(data);
             break;
         case "post_market_order":
             PostMarketOrder$.next(data);
@@ -90,6 +103,9 @@ function processResponse(data: any) {
             break;
         case "loot_log_updated":
             LootLogData$.next(data);
+            break;
+        case "loot_opened":
+            LootOpened$.next(data);
             break;
     }
 }

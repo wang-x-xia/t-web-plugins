@@ -5,20 +5,25 @@ import type {
     InitCharacterData,
     InitClientData,
     ItemUpdatedData,
-    LootLogData
+    LootLogData,
+    LootOpened
 } from "../api/message-type";
 import type {
+    BuyMooPassWithCowbells,
     ClaimAllMarketListings,
     ClaimCharacterQuest,
     ClaimMarketListing,
+    OpenLoot,
     PostMarketOrder
 } from "../api/request-message-type";
 import type {ItemChangesData} from "./inventory";
 
 // Request
+export const BuyMooPassWithCowbells$ = new Subject<BuyMooPassWithCowbells>();
 export const ClaimAllMarketListings$ = new Subject<ClaimAllMarketListings>();
 export const ClaimCharacterQuest$ = new Subject<ClaimCharacterQuest>();
 export const ClaimMarketListing$ = new Subject<ClaimMarketListing>();
+export const OpenLoot$ = new Subject<OpenLoot>();
 export const PostMarketOrder$ = new Subject<PostMarketOrder>();
 
 // Response
@@ -27,6 +32,7 @@ export const LootLogData$ = new ReplaySubject<LootLogData>(1);
 export const ActionCompleteData$ = new Subject<ActionCompletedData>();
 export const ItemUpdatedData$ = new Subject<ItemUpdatedData>();
 export const ActionsUpdatedData$ = new Subject<ActionsUpdatedData>();
+export const LootOpened$ = new Subject<LootOpened>();
 
 
 export const CharacterLoadedEvent = InitCharacterData$.pipe(take(1));

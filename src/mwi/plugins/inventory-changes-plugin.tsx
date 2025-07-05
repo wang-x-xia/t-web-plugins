@@ -32,6 +32,8 @@ interface HourChangesData {
     action: Record<string, ItemChangesData>
     market: ItemChangesData
     quest: ItemChangesData
+    loot: ItemChangesData
+    other: ItemChangesData
     unknown: ItemChangesData
 }
 
@@ -54,21 +56,24 @@ InventoryItemChanges$.subscribe(({added, removed, cause, time}) => {
             action: {},
             market: {added: [], removed: []},
             quest: {added: [], removed: []},
+            loot: {added: [], removed: []},
+            other: {added: [], removed: []},
             unknown: {added: [], removed: []},
         };
         result = [...result, entry];
     }
     if (cause.type === "action") {
-        entry.action[cause.action] = mergeItemChangesData(entry.action[cause.action] ?? {
-            added: [],
-            removed: []
-        }, {added, removed});
+        entry.action[cause.action] = mergeItemChangesData(entry.action[cause.action], {added, removed});
     } else if (cause.type === "market") {
         entry.market = mergeItemChangesData(entry.market, {added, removed})
     } else if (cause.type === "quest") {
         entry.quest = mergeItemChangesData(entry.quest, {added, removed})
-    } else {
+    } else if (cause.type === "loot") {
+        entry.loot = mergeItemChangesData(entry.loot, {added, removed})
+    } else if (cause.type === "unknown") {
         entry.unknown = mergeItemChangesData(entry.unknown, {added, removed})
+    } else {
+        entry.other = mergeItemChangesData(entry.other, {added, removed})
     }
     // Reverse order
     result.sort((a, b) => b.time - a.time);
@@ -126,46 +131,32 @@ function ShowInventoryChanges() {
                     </tr>
                     </thead>
                     <tbody>
-                    {
-                        (it.market.added.length > 0 || it.market.removed.length > 0) ?
-                            <tr>
-                                <td>Market</td>
-                                <td>
-                                    <BuyItemTable items={it.market.added}/>
-                                </td>
-                                <td>
-                                    <SellItemTable items={it.market.removed}/>
-                                </td>
-                            </tr> : <></>
-                    }
-                    {
-                        (it.quest && (it.quest.added.length > 0 || it.quest.removed.length > 0)) ?
-                            <tr>
-                                <td>Quest</td>
-                                <td>
-                                    <BuyItemTable items={it.quest.added}/>
-                                </td>
-                                <td>
-                                    <SellItemTable items={it.quest.removed}/>
-                                </td>
-                            </tr> : <></>
-                    }
-                    {
-                        (it.unknown && (it.unknown.added.length > 0 || it.unknown.removed.length > 0)) ?
-                            <tr>
-                                <td>Unknown</td>
-                                <td>
-                                    <BuyItemTable items={it.unknown.added}/>
-                                </td>
-                                <td>
-                                    <SellItemTable items={it.unknown.removed}/>
-                                </td>
-                            </tr> : <></>
-                    }
+                    <ShowChangeRow changes={it.market} name="Market"/>
+                    <ShowChangeRow changes={it.quest} name="Quest"/>
+                    <ShowChangeRow changes={it.loot} name="Loot"/>
+                    <ShowChangeRow changes={it.other} name="Other"/>
+                    <ShowChangeRow changes={it.unknown} name="Unknown"/>
                     </tbody>
                 </table>
             </td>
         </tr>)}
         </tbody>
     </table>
+}
+
+function ShowChangeRow({changes, name}: { changes: ItemChangesData | undefined, name: string }) {
+    if (changes && changes.added.length && changes.removed.length) {
+        return <tr>
+            <td>{name}</td>
+            <td>
+                <BuyItemTable items={changes.added}/>
+            </td>
+            <td>
+                <SellItemTable items={changes.removed}/>
+            </td>
+        </tr>
+    } else {
+        return <></>
+    }
+
 }
