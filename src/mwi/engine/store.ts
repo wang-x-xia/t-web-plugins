@@ -11,6 +11,8 @@ InitCharacterData$.subscribe(data => {
 
 export const StoreSizeChange$ = new Subject<{ store: StoreDefine<any>, size: number }>();
 
+export type StoreDataOfSubject<T extends BehaviorSubject<any>> = T["value"]
+
 export interface StoreDefine<T> {
     id: string;
     name: string;

@@ -1,10 +1,10 @@
 import * as React from "react";
 import {createContext, useContext, useEffect, useState} from "react";
-import {type AnyActionType, CollectActionType, ManufacturingActionType} from "../engine/action";
+import {CollectActionType, ManufacturingActionType} from "../engine/action";
 import {NormalBuffType} from "../engine/buff-type";
 import {getClientData} from "../engine/client";
 import {InitClientSubject} from "../engine/engine-event";
-import {useBuffData} from "./buff";
+import {ShowBuffByNonCombatActionType, useBuffData} from "./buff";
 import {Expandable} from "./expandable";
 import {BuyItemTable, type ItemInput, prepareBuyItems, prepareSellItems, SellItemTable} from "./item-table";
 import {ShowNumber} from "./number";
@@ -85,12 +85,9 @@ export function ShowCollectOrManufacturingAction({action}: { action: string }) {
     const baseTimeCost = actionDetails.baseTimeCost / 1e9
     const category = getClientData().actionCategoryDetailMap[actionDetails.category];
 
-    const {
-        buffData,
-        BuffTable
-    } = useBuffData(actionDetails.type as AnyActionType, actionDetails.levelRequirement.level);
+    const buffData = useBuffData(actionDetails.type as any, actionDetails.levelRequirement.level);
 
-    const times = 60 * 60 / baseTimeCost * (1 + buffData[NormalBuffType.Efficiency]);
+    const times = 60 * 60 / baseTimeCost * (1 + buffData[NormalBuffType.Efficiency].value);
 
     const inputs: ItemInput[] = (actionDetails.inputItems ?? []).map(input => ({
         hrid: input.itemHrid,
@@ -110,13 +107,13 @@ export function ShowCollectOrManufacturingAction({action}: { action: string }) {
                     let count = times * (drop.minCount + drop.maxCount) * drop.dropRate;
                     switch (dropType) {
                         case "dropTable":
-                            count *= (1 + buffData[NormalBuffType.Gathering]);
+                            count *= (1 + buffData[NormalBuffType.Gathering].value);
                             break;
                         case "essenceDropTable":
-                            count *= (1 + buffData[NormalBuffType.EssenceFind]);
+                            count *= (1 + buffData[NormalBuffType.EssenceFind].value);
                             break;
                         case "rareDropTable":
-                            count *= (1 + buffData[NormalBuffType.RareFind]);
+                            count *= (1 + buffData[NormalBuffType.RareFind].value);
                             break;
                     }
                     return ({
@@ -141,7 +138,7 @@ export function ShowCollectOrManufacturingAction({action}: { action: string }) {
         <td>
             <div>
                 <ShowNumber value={baseTimeCost}/> s {"->"}
-                <ShowNumber value={baseTimeCost / (1 + buffData[NormalBuffType.ActionSpeed])}/> s
+                <ShowNumber value={baseTimeCost / (1 + buffData[NormalBuffType.ActionSpeed].value)}/> s
             </div>
             <div>
                 <div><ShowNumber value={times}/> times/h</div>
@@ -156,6 +153,6 @@ export function ShowCollectOrManufacturingAction({action}: { action: string }) {
         {/* Output */}
         <td><SellItemTable items={outputs}/></td>
         {/* Buff */}
-        <td><Expandable><BuffTable/></Expandable></td>
+        <td><Expandable><ShowBuffByNonCombatActionType actionType={actionDetails.type as any} data={buffData}/></Expandable></td>
     </>
 }
