@@ -149,10 +149,14 @@ function ShowChangeRow({changes, name}: { changes: ItemChangesData | undefined, 
         return <tr>
             <td>{name}</td>
             <td>
-                <BuyItemTable items={changes.added}/>
+                <BuyItemTable items={changes.added.map(({hrid, level, count}) => ({
+                    hrid, enhancementLevel: level, count,
+                }))}/>
             </td>
             <td>
-                <SellItemTable items={changes.removed}/>
+                <SellItemTable items={changes.removed.map(({hrid, level, count}) => ({
+                    hrid, enhancementLevel: level, count,
+                }))}/>
             </td>
         </tr>
     } else {
