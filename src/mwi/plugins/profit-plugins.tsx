@@ -1,6 +1,6 @@
 import * as React from "react";
 import {ShowCollectOrManufacturingActions} from "../component/action";
-import {ShowBuffByActionType} from "../component/buff";
+import {ShowBuffByNonCombatActionType} from "../component/buff";
 import {CollectActionType, ManufacturingActionType} from "../engine/action";
 import {AllLoadedEvent} from "../engine/engine-event";
 import {saveSettings, useSettings} from "../settings";
@@ -31,7 +31,7 @@ export function ShowProfit() {
             <option value={ManufacturingActionType.Cooking}>Cooking</option>
             <option value={ManufacturingActionType.Brewing}>Brewing</option>
         </select>
-        <ShowBuffByActionType actionType={action}/>
+        <ShowBuffByNonCombatActionType actionType={action}/>
         <ShowCollectOrManufacturingActions actionType={action}/>
     </div>
 }
