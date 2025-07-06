@@ -1,7 +1,7 @@
-import {ReplaySubject} from "rxjs";
 import {log} from "../../shared/log";
 import {MarketLoaded$} from "./engine-event";
 import {getOpenableItem, isItemOpenable, SpecialItems} from "./item";
+import {type StoreDefine, storeSubject} from "./store";
 
 const MarketSource = "game_data/marketplace.json"
 
@@ -14,13 +14,8 @@ export interface MarketData {
     timestamp: number;
 }
 
-let markerData: MarketData | null = null;
-
 export function getMarketData() {
-    if (!markerData) {
-        throw new Error("Market data not loaded");
-    }
-    return markerData;
+    return MarketData$.getValue();
 }
 
 export function getSellPriceByHrid(hrid: string, enhancementLevel: number = 0, marketData: MarketData | undefined = undefined): number {
@@ -53,24 +48,34 @@ function getPriceByHrid(hrid: string, field: "a" | "b", enhancementLevel: number
     return marketData.marketData[hrid][enhancementLevel.toString()]?.[field] ?? -1;
 }
 
-export const MarketData$ = new ReplaySubject<MarketData>(1);
+const MarketDataStore: StoreDefine<MarketData> = {
+    id: "market",
+    name: "Market",
+    characterBased: false,
+    enableSettings: false,
+    defaultValue: {
+        marketData: {},
+        timestamp: 0,
+    },
+}
+
+export const MarketData$ = storeSubject(MarketDataStore);
 
 export async function setupMarketData() {
-    if (GM_getValue("marketdata", false)) {
-        markerData = JSON.parse(GM_getValue("marketdata", "{}") as string) as MarketData;
-        MarketData$.next(markerData);
+    let marketData = MarketData$.getValue();
+    if (marketData.timestamp !== 0) {
         MarketLoaded$.complete();
-        if (Date.now() / 1000 - markerData.timestamp <= 6 * 60 * 60) {
+        if (Date.now() / 1000 - MarketData$.getValue().timestamp <= 6 * 60 * 60) {
             // Use cached data
-            log("use-cached-market-data", {"data": markerData});
+            log("use-cached-market-data", {"data": marketData});
             return;
         } else {
-            log("market-data-expired", {"data": markerData});
+            log("market-data-expired", {"data": marketData});
         }
     }
-    markerData = (await (await fetch(MarketSource)).json()) as MarketData;
-    GM_setValue("marketdata", JSON.stringify(markerData));
-    log("loaded-market-data", {"data": markerData});
-    MarketData$.next(markerData);
+    marketData = (await (await fetch(MarketSource)).json()) as MarketData;
+    GM_setValue("marketdata", JSON.stringify(marketData));
+    log("loaded-market-data", {"data": marketData});
+    MarketData$.next(marketData);
     MarketLoaded$.complete();
 }

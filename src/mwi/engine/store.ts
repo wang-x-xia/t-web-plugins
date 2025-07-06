@@ -2,6 +2,7 @@ import {BehaviorSubject, Subject} from "rxjs";
 import {info, log} from "../../shared/log";
 import {loadSettings} from "../settings";
 import {InitCharacterData$} from "./engine-event";
+import {isTestServer} from "./server";
 
 const CharacterId$ = new BehaviorSubject<string | null>(null);
 
@@ -36,7 +37,11 @@ export function getStoreKey(store: StoreDefine<any>) {
     if (store.characterBased) {
         return `store.${store.id}.character.${CharacterId$.getValue()}`;
     }
-    return `store.${store.id}`;
+    if (isTestServer()) {
+        return `store.${store.id}.test`;
+    } else {
+        return `store.${store.id}`;
+    }
 }
 
 export function getStoreData<T>(store: StoreDefine<T>): StoredValue<T> {

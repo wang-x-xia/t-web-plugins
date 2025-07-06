@@ -1,59 +1,53 @@
 import * as React from "react";
-import {createContext, useContext, useEffect, useState} from "react";
+import {useMemo} from "react";
+import {useLatestValue} from "../../shared/rxjs-react";
 import {CollectActionType, ManufacturingActionType} from "../engine/action";
-import {NormalBuffType} from "../engine/buff-type";
+import {BuffData$, produceLevelData} from "../engine/buff";
 import {getClientData} from "../engine/client";
-import {InitClientSubject} from "../engine/engine-event";
-import {ShowBuffByNonCombatActionType, useBuffData} from "./buff";
+import {InitCharacterData$} from "../engine/engine-event";
+import {
+    DropType,
+    getActionProfit,
+    type ItemDropIncome,
+    type ItemInputCost,
+    type ProfitConfiguration,
+    type ProfitData
+} from "../engine/profit";
+import {ShowBuffByNonCombatActionType} from "./buff";
 import {Expandable} from "./expandable";
-import {BuyItemTable, type ItemInput, prepareBuyItems, prepareSellItems, SellItemTable} from "./item-table";
-import {ShowNumber} from "./number";
+import {ShowItem} from "./item";
+import {ShowNumber, ShowPercent} from "./number";
 
-
-interface ProfitContextData {
-    updateProfit(action: string, profit: number): void;
-}
-
-const NoOpProfitContextData: ProfitContextData = {
-    updateProfit: () => {
-    }
-}
-
-const ProfitContext = createContext<ProfitContextData>(NoOpProfitContextData);
 
 export function ShowCollectOrManufacturingActions({actionType}: {
     actionType: CollectActionType | ManufacturingActionType
 }) {
-    const [actions, setActions] = useState([] as { action: string, profit: number }[]);
-    useEffect(() => {
-        const subscription = InitClientSubject.subscribe(data => {
-            const actions = Object.values(data.actionDetailMap)
-                .filter(action => action.type === actionType)
-                .map(action => {
-                    return {action: action.hrid, profit: 0,}
-                })
-            setActions(actions);
-        });
-        return () => {
-            subscription.unsubscribe();
-        };
-    }, [actionType]);
-    const profitState: ProfitContextData = {
-        updateProfit: (action: string, profit: number) => {
-            setActions(prev => {
-                const prevItem = prev.find(it => it.action === action);
-                if (!prevItem || prevItem.profit === profit) {
-                    // Not found or no change, return prev
-                    return prev;
-                }
-                return prev
-                    .map(it => it.action === action ? {...it, profit} : it)
-                    // profit desc and action asc
-                    .sort((a, b) => b.profit - a.profit || a.action.localeCompare(b.action));
-            });
+    const buffData = useLatestValue(BuffData$);
+    const characterData = useLatestValue(InitCharacterData$);
+    const actions = useMemo<(ProfitData & ProfitConfiguration) []>(() => {
+        if (!buffData || !characterData) {
+            return [];
         }
-    }
-
+        const actions = Object.values(getClientData().actionDetailMap)
+            .filter(action => action.type === actionType)
+            .map(action => {
+                const config: ProfitConfiguration = {
+                    action: action.hrid,
+                    hours: 1,
+                    mode: "avg",
+                    lucky: 0,
+                    buff: produceLevelData(buffData[actionType], action.levelRequirement.level,
+                        characterData.characterSkills.find(it => it.skillHrid === action.levelRequirement.skillHrid)?.level ?? 0),
+                }
+                return {
+                    ...getActionProfit(config),
+                    ...config,
+                }
+            })
+        return actions.sort((a, b) => {
+            return b.profit - a.profit
+        });
+    }, [actionType, buffData, characterData]);
     return <table>
         <thead>
         <tr>
@@ -67,92 +61,151 @@ export function ShowCollectOrManufacturingActions({actionType}: {
         </tr>
         </thead>
         <tbody>
-        <ProfitContext.Provider value={profitState}>
-            {actions.map(action =>
-                <tr key={action.action}>
-                    <ShowCollectOrManufacturingAction action={action.action}/>
-                </tr>
-            )}
-        </ProfitContext.Provider>
+        {actions.map(action =>
+            <tr key={action.action}>
+                <ShowCollectOrManufacturingAction data={action}/>
+            </tr>
+        )}
         </tbody>
     </table>
 }
 
-export function ShowCollectOrManufacturingAction({action}: { action: string }) {
-    const {updateProfit} = useContext(ProfitContext);
-
-    const actionDetails = getClientData().actionDetailMap[action]
-    const baseTimeCost = actionDetails.baseTimeCost / 1e9
-    const category = getClientData().actionCategoryDetailMap[actionDetails.category];
-
-    const buffData = useBuffData(actionDetails.type as any, actionDetails.levelRequirement.level);
-
-    const times = 60 * 60 / baseTimeCost * (1 + buffData[NormalBuffType.Efficiency].value);
-
-    const inputs: ItemInput[] = (actionDetails.inputItems ?? []).map(input => ({
-        hrid: input.itemHrid,
-        count: input.count * times,
-    }));
-
-    const {total: cost} = prepareBuyItems(inputs);
-
-    const outputs: ItemInput[] = [
-        ...(actionDetails.outputItems ?? []).map(input => ({
-            hrid: input.itemHrid,
-            count: input.count * times,
-        })),
-        ...(["dropTable", "essenceDropTable", "rareDropTable"] as ("dropTable" | "essenceDropTable" | "rareDropTable")[])
-            .flatMap((dropType) => (actionDetails[dropType] ?? [])
-                .map(drop => {
-                    let count = times * (drop.minCount + drop.maxCount) * drop.dropRate;
-                    switch (dropType) {
-                        case "dropTable":
-                            count *= (1 + buffData[NormalBuffType.Gathering].value);
-                            break;
-                        case "essenceDropTable":
-                            count *= (1 + buffData[NormalBuffType.EssenceFind].value);
-                            break;
-                        case "rareDropTable":
-                            count *= (1 + buffData[NormalBuffType.RareFind].value);
-                            break;
-                    }
-                    return ({
-                        hrid: drop.itemHrid,
-                        count,
-                    });
-                })),
-    ];
-
-    const {total: income} = prepareSellItems(outputs);
-
-    useEffect(() => {
-        updateProfit(action, income - cost);
-    }, [income, cost]);
+export function ShowCollectOrManufacturingAction({data}: { data: ProfitData & ProfitConfiguration }) {
+    const {action, baseTimeCost, timeCost, times, cost, income, profit, inputs, outputs, buff, hours} = data;
+    const actionDetails = getClientData().actionDetailMap[action];
+    const actionCategory = getClientData().actionCategoryDetailMap[actionDetails.category];
 
     return <>
         {/* Name */}
         <th>{actionDetails.name}</th>
         {/* Category */}
-        <th>{category.name}</th>
+        <th>{actionCategory.name}</th>
         {/* Stat */}
         <td>
             <div>
                 <ShowNumber value={baseTimeCost}/> s {"->"}
-                <ShowNumber value={baseTimeCost / (1 + buffData[NormalBuffType.ActionSpeed].value)}/> s
+                <ShowNumber value={timeCost}/> s
             </div>
             <div>
-                <div><ShowNumber value={times}/> times/h</div>
+                <div><ShowNumber value={times}/> times</div>
+                {hours !== 1
+                    ? <div><ShowNumber value={times / hours}/> times/h</div>
+                    : <></>
+                }
             </div>
         </td>
         {/* Profit */}
         <td>
-            <ShowNumber value={income - cost}/>
+            <ShowNumber value={profit}/>
         </td>
         {/* Input */}
-        <td><BuyItemTable items={inputs}/></td>
+        <td>
+            <ShowNumber value={cost}/>
+            <ShowItemInputCost inputs={inputs} cost={cost}/>
+        </td>
         {/* Output */}
-        <td><SellItemTable items={outputs}/></td>
+        <td>
+            <ShowNumber value={income}/>
+            <ShowItemDropIncome outputs={outputs} income={income}/>
+        </td>
         {/* Buff */}
-        <td><Expandable><ShowBuffByNonCombatActionType actionType={actionDetails.type as any} data={buffData}/></Expandable></td>
+        <td><Expandable><ShowBuffByNonCombatActionType actionType={actionDetails.type as any}
+                                                       data={buff}/></Expandable></td>
     </>
+}
+
+export function ShowItemInputCost({inputs, cost: totalCost}: { inputs: ItemInputCost[], cost: number }) {
+    if (inputs.length === 0) {
+        return null;
+    }
+    return <Expandable>
+        <table>
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Count</th>
+                <th>Price</th>
+                <th>Subtotal</th>
+                <th>Radio</th>
+            </tr>
+            </thead>
+            <tbody>
+            {
+                inputs.map(({hrid, count, price, cost}) => <tr key={hrid}>
+                    <td><ShowItem hrid={hrid}/></td>
+                    <td><ShowNumber value={count}/></td>
+                    <td><ShowNumber value={price}/></td>
+                    <td><ShowNumber value={cost}/></td>
+                    <td><ShowPercent value={cost / totalCost}/></td>
+                </tr>)
+            }
+            </tbody>
+        </table>
+    </Expandable>
+}
+
+export function ShowItemDropIncome({outputs, income: totalIncome}: { outputs: ItemDropIncome[], income: number }) {
+    if (outputs.length === 0) {
+        return <></>
+    }
+    return <Expandable>
+        <table>
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Info</th>
+                <th>Count</th>
+                <th>Price</th>
+                <th>Subtotal</th>
+                <th>Radio</th>
+            </tr>
+            </thead>
+            <tbody>
+            {
+                outputs.map((output) => {
+                    const {type, hrid, count, price, income, originDrop} = output
+                    return <tr key={`${type}-${hrid}-${originDrop.rate}`}>
+                        <td>{
+                            type === DropType.RareLoot ?
+                                <ShowItem hrid={hrid}/> :
+                                <ShowItem hrid={hrid} enhancementLevel={output.enhancementLevel ?? 0}/>
+                        }</td>
+                        <td><ShowDropInfo output={output}/></td>
+                        <td><ShowNumber value={count}/></td>
+                        <td><ShowNumber value={price}/></td>
+                        <td><ShowNumber value={income}/></td>
+                        <td><ShowPercent value={income / totalIncome}/></td>
+                    </tr>;
+                })
+            }
+            </tbody>
+        </table>
+    </Expandable>
+}
+
+
+function ShowDropInfo({output}: { output: ItemDropIncome }) {
+    const {type, originDrop, buffedDrop} = output
+    const dropInfo = <Expandable>
+        <div>{
+            originDrop.minCount === originDrop.maxCount ?
+                <><ShowNumber value={buffedDrop.minCount}/>(<ShowNumber value={originDrop.minCount}/>)</> :
+                <><ShowNumber value={buffedDrop.minCount}/>(<ShowNumber value={originDrop.minCount}/>) -
+                    <ShowNumber value={buffedDrop.maxCount}/>(<ShowNumber value={originDrop.maxCount}/>)</>
+
+        }</div>
+        <div><ShowPercent value={buffedDrop.rate}/>(<ShowPercent value={originDrop.rate}/>)</div>
+    </Expandable>
+
+    switch (type) {
+        case DropType.Output:
+            return <>Output</>
+        case DropType.Normal:
+            return <> Output{dropInfo}</>
+        case DropType.Essence:
+            return <>Essence{dropInfo}</>
+        case DropType.Rare:
+        case DropType.RareLoot:
+            return <>Rare{dropInfo}</>
+    }
 }
