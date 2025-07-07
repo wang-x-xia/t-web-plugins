@@ -1,3 +1,5 @@
+// @ts-ignore
+import * as jStat from 'jstat';
 import {sum} from "../../shared/list";
 import {DropInfo} from "../api/action-type";
 import {type BuffData, NormalBuffType} from "./buff-type";
@@ -220,6 +222,24 @@ function getDropCount(
 ) {
     if (mode === "avg") {
         return times * dropRate * (minCount + maxCount) / 2;
+    }
+    const mean = (minCount + maxCount) / 2 * dropRate * times;
+    const np = dropRate * times;
+    const np_1 = (1 - dropRate) * times;
+    if (times >= 20 && np >= 5 && np_1 >= 5) {
+        // If minCount === maxCount, then std = Math.sqrt((p * (1 - p)) * count)
+        const std = Math.sqrt(times * (dropRate * Math.pow(maxCount - minCount, 2) / 12 + (dropRate * (1 - dropRate) * Math.pow(maxCount + minCount, 2) / 4)));
+        return Math.round(jStat.normal.inv(lucky, mean, std));
+    }
+    if (times >= 20) {
+        let cdf = 0
+        for (let i = 0; i < times; i++) {
+            cdf += jStat.poisson.pdf(i, mean);
+            if (cdf >= lucky) {
+                return i;
+            }
+        }
+        return times;
     }
     return 0;
 }
