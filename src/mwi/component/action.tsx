@@ -19,8 +19,11 @@ import {ShowItem} from "./item";
 import {ShowNumber, ShowPercent} from "./number";
 
 
-export function ShowCollectOrManufacturingActions({actionType}: {
-    actionType: CollectActionType | ManufacturingActionType
+export function ShowCollectOrManufacturingActions({actionType, hours, mode, lucky}: {
+    actionType: CollectActionType | ManufacturingActionType,
+    hours: number,
+    mode: "avg" | "lucky",
+    lucky: number,
 }) {
     const buffData = useLatestValue(BuffData$);
     const characterData = useLatestValue(InitCharacterData$);
@@ -33,9 +36,7 @@ export function ShowCollectOrManufacturingActions({actionType}: {
             .map(action => {
                 const config: ProfitConfiguration = {
                     action: action.hrid,
-                    hours: 1,
-                    mode: "avg",
-                    lucky: 0,
+                    hours, mode, lucky,
                     buff: produceLevelData(buffData[actionType], action.levelRequirement.level,
                         characterData.characterSkills.find(it => it.skillHrid === action.levelRequirement.skillHrid)?.level ?? 0),
                 }
@@ -47,7 +48,7 @@ export function ShowCollectOrManufacturingActions({actionType}: {
         return actions.sort((a, b) => {
             return b.profit - a.profit
         });
-    }, [actionType, buffData, characterData]);
+    }, [actionType, buffData, characterData, hours, mode, lucky]);
     return <table>
         <thead>
         <tr>
@@ -97,6 +98,10 @@ export function ShowCollectOrManufacturingAction({data}: { data: ProfitData & Pr
         {/* Profit */}
         <td>
             <ShowNumber value={profit}/>
+            {hours !== 1
+                ? <div><ShowNumber value={profit / hours}/> /h</div>
+                : <></>
+            }
         </td>
         {/* Input */}
         <td>
