@@ -7,17 +7,17 @@ import {ShowStoreActions} from "../component/store";
 import {getActionName} from "../engine/action";
 
 import {ActionCompleteEvent, type ActionCompleteEventData, AllLoadedEvent} from "../engine/engine-event";
-import {type StoreDefine, storeSubject} from "../engine/store";
+import {defineStore, storeSubject} from "../engine/store";
 import {AddView} from "../view";
 
 
-const ActionStatStore: StoreDefine<ActionCompleteEventData[]> = {
+const ActionStatStore = defineStore<ActionCompleteEventData[]>({
     id: "action-stat",
     name: "Action Stat",
     characterBased: true,
     enableSettings: true,
     defaultValue: [],
-}
+})
 
 const ActionStat$ = storeSubject(ActionStatStore);
 ActionCompleteEvent.subscribe((event) => {

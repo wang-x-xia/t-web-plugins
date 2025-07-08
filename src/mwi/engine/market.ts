@@ -1,7 +1,7 @@
 import {log} from "../../shared/log";
 import {MarketLoaded$} from "./engine-event";
 import {getOpenableItem, isItemOpenable, SpecialItems} from "./item";
-import {type StoreDefine, storeSubject} from "./store";
+import {defineStore, storeSubject} from "./store";
 
 const MarketSource = "game_data/marketplace.json"
 
@@ -48,7 +48,7 @@ function getPriceByHrid(hrid: string, field: "a" | "b", enhancementLevel: number
     return marketData.marketData[hrid][enhancementLevel.toString()]?.[field] ?? -1;
 }
 
-const MarketDataStore: StoreDefine<MarketData> = {
+const MarketDataStore = defineStore<MarketData>({
     id: "market",
     name: "Market",
     characterBased: false,
@@ -57,7 +57,7 @@ const MarketDataStore: StoreDefine<MarketData> = {
         marketData: {},
         timestamp: 0,
     },
-}
+})
 
 export const MarketData$ = storeSubject(MarketDataStore);
 

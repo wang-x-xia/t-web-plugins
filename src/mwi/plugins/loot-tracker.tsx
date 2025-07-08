@@ -1,13 +1,13 @@
 import * as React from "react";
 import {useLatestValue} from "../../shared/rxjs-react";
+
+import {createStringSelectSetting, updateSetting, useSetting} from "../../shared/settings";
 import type {LootLog} from "../api/loot-type";
 import {ItemTable, prepareBuyItems, prepareSellItems} from "../component/item-table";
 import {ShowNumber} from "../component/number";
 import {getActionInputs, getActionName} from "../engine/action";
 import {LootLogSubject} from "../engine/engine-event";
 import {resolveItemHrid} from "../engine/hrid";
-
-import {saveSettings, useSettings} from "../settings";
 import {AddView} from "../view";
 
 export function lootTrackerPlugin() {
@@ -21,16 +21,24 @@ export function lootTrackerPlugin() {
     });
 }
 
+const MODE_SETTING = createStringSelectSetting<"all" | "hour">({
+    id: "loot-tracker.mode",
+    name: "Mode", defaultValue: "hour"
+}, [
+    {name: "All", value: "all"},
+    {name: "Hourly", value: "hour"}
+]);
+
 function ShowLootTracker() {
-    const mode = useSettings<"all" | "hour">("loot-tracker.mode", "hour");
+    const mode = useSetting(MODE_SETTING);
     const event = useLatestValue(LootLogSubject);
 
     const lootLogs = [...(event?.lootLog ?? [])].reverse();
     return <>
         <div>
             Current: {mode === "hour" ? "Hourly Data" : "Total"}
-            <button onClick={() => saveSettings("loot-tracker.mode", "hour")}>Hourly</button>
-            <button onClick={() => saveSettings("loot-tracker.mode", "all")}>Total</button>
+            <button onClick={() => updateSetting(MODE_SETTING, "hour")}>Hourly</button>
+            <button onClick={() => updateSetting(MODE_SETTING, "all")}>Total</button>
         </div>
         <table>
             <thead>

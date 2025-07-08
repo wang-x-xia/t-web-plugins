@@ -1,6 +1,6 @@
 import {BehaviorSubject, Subject} from "rxjs";
 import {info, log} from "../../shared/log";
-import {loadSettings} from "../settings";
+import {createBoolSetting, getSetting, type Setting} from "../../shared/settings";
 import {InitCharacterData$} from "./engine-event";
 import {isTestServer} from "./server";
 
@@ -10,11 +10,11 @@ InitCharacterData$.subscribe(data => {
     CharacterId$.next(data.character.id);
 });
 
-export const StoreSizeChange$ = new Subject<{ store: StoreDefine<any>, size: number }>();
+export const StoreSizeChange$ = new Subject<{ store: StoreDefinition<any>, size: number }>();
 
 export type StoreDataOfSubject<T extends BehaviorSubject<any>> = T["value"]
 
-export interface StoreDefine<T> {
+export interface StoreDefinition<T> {
     id: string;
     name: string;
     /**
@@ -26,6 +26,15 @@ export interface StoreDefine<T> {
      */
     enableSettings: boolean;
     defaultValue: T;
+
+    enableSetting: Setting<boolean> | null;
+}
+
+export function defineStore<T>(store: Omit<StoreDefinition<T>, "enableSetting">) {
+    return {
+        ...store,
+        enableSetting: store.enableSettings ? createBoolSetting(`store.${store.id}.enable`, store.name, true) : null
+    };
 }
 
 export interface StoredValue<T> {
@@ -33,7 +42,7 @@ export interface StoredValue<T> {
     data: T | null;
 }
 
-export function getStoreKey(store: StoreDefine<any>) {
+export function getStoreKey(store: StoreDefinition<any>) {
     if (store.characterBased) {
         return `store.${store.id}.character.${CharacterId$.getValue()}`;
     }
@@ -44,7 +53,7 @@ export function getStoreKey(store: StoreDefine<any>) {
     }
 }
 
-export function getStoreData<T>(store: StoreDefine<T>): StoredValue<T> {
+export function getStoreData<T>(store: StoreDefinition<T>): StoredValue<T> {
     const {defaultValue} = store
     const data = GM_getValue(getStoreKey(store), null);
     if (data === null) {
@@ -65,11 +74,13 @@ export function getStoreData<T>(store: StoreDefine<T>): StoredValue<T> {
     return JSON.parse(data);
 }
 
-export function updateStoreData<T>(store: StoreDefine<T>, data: T) {
-    const {id, enableSettings} = store;
-    if (enableSettings && !loadSettings(`store.${id}.enable`, true)) {
-        log("skip-update-store-data", {store, data});
-        return;
+export function updateStoreData<T>(store: StoreDefinition<T>, data: T) {
+    const {enableSetting} = store;
+    if (enableSetting !== null) {
+        if (!getSetting(enableSetting)) {
+            log("skip-update-store-data", {store, data});
+            return;
+        }
     }
     const storedData: StoredValue<T> = {updated: Date.now(), data};
     log("update-store-data", {store, storedData});
@@ -78,7 +89,7 @@ export function updateStoreData<T>(store: StoreDefine<T>, data: T) {
     StoreSizeChange$.next({store, size: json.length});
 }
 
-export function resetStoreData<T>(store: StoreDefine<T>) {
+export function resetStoreData<T>(store: StoreDefinition<T>) {
     const {defaultValue} = store;
     const storedData: StoredValue<T> = {updated: Date.now(), data: defaultValue};
     log("reset-store-data", {store, storedData});
@@ -86,7 +97,7 @@ export function resetStoreData<T>(store: StoreDefine<T>) {
     StoreSizeChange$.next({store, size: 0});
 }
 
-export function storeSubject<T>(store: StoreDefine<T>): BehaviorSubject<T> {
+export function storeSubject<T>(store: StoreDefinition<T>): BehaviorSubject<T> {
     const {defaultValue} = store;
     const subject = new BehaviorSubject<T>(defaultValue);
 
@@ -108,12 +119,12 @@ export function storeSubject<T>(store: StoreDefine<T>): BehaviorSubject<T> {
 }
 
 
-export function exportStore<T>(store: StoreDefine<T>) {
+export function exportStore<T>(store: StoreDefinition<T>) {
     const blob = new Blob([JSON.stringify(getStoreData(store))], {type: "application/json;charset=utf-8"});
     window.open(window.URL.createObjectURL(blob));
 }
 
-export function getStoreSize<T>(store: StoreDefine<T>): number {
+export function getStoreSize<T>(store: StoreDefinition<T>): number {
     const data = getStoreData(store);
     return JSON.stringify(data).length;
 }

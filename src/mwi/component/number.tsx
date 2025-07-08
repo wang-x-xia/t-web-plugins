@@ -1,13 +1,19 @@
 import * as React from "react";
-import {useSettings} from "../settings";
+import {createStringSelectSetting, useSetting} from "../../shared/settings";
 
 export enum NumberFormat {
     Short = "short",
     Full = "full",
 }
 
+export const NUMBER_FORMAT_SETTING = createStringSelectSetting<NumberFormat>(
+    {id: "number.format", name: "Number format", defaultValue: NumberFormat.Short}, [
+        {name: "Short", value: NumberFormat.Short},
+        {name: "Full", value: NumberFormat.Full},
+    ]);
+
 export function ShowNumber({value}: { value: number }) {
-    const format = useSettings<NumberFormat>("number.format", NumberFormat.Short);
+    const format = useSetting(NUMBER_FORMAT_SETTING);
     switch (format) {
         default:
         case NumberFormat.Short:
@@ -81,5 +87,5 @@ export function formatSize(num: number): string {
         // >= 10KB
         return formatWithThousandsSeparators(num / 1e3) + 'KB';
     }
-    return formatWithThousandsSeparators(num);
+    return formatWithThousandsSeparators(num) + 'B';
 }
