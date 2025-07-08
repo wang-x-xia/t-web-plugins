@@ -2,6 +2,7 @@ import * as React from "react";
 import {Fragment} from "react";
 import {sum} from "../../shared/list";
 import {useLatestOrDefault, useLatestValue} from "../../shared/rxjs-react";
+import {createBoolSetting, updateSetting, useSetting} from "../../shared/settings";
 import {ShowTimestamp} from "../component/date";
 import {ShowItem} from "../component/item";
 import {ShowNumber} from "../component/number";
@@ -11,18 +12,17 @@ import {AllLoadedEvent} from "../engine/engine-event";
 import {InventoryData$} from "../engine/inventory";
 import {getItemCategory, ItemCategory, SpecialItems} from "../engine/item";
 import {getSellPriceByHrid, type MarketData, MarketData$} from "../engine/market";
-import {type StoreDefine, storeSubject} from "../engine/store";
-import {saveSettings, useSettings} from "../settings";
+import {defineStore, storeSubject} from "../engine/store";
 import {AddView} from "../view";
 
 
-const MarketHistoryStore: StoreDefine<MarketData[]> = {
+const MarketHistoryStore = defineStore<MarketData[]>({
     id: "price-change",
     name: "Market History",
     characterBased: false,
     enableSettings: true,
     defaultValue: [],
-}
+})
 
 export const MarketHistoryData$ = storeSubject(MarketHistoryStore);
 
@@ -51,10 +51,15 @@ export function priceChangePlugin() {
     });
 }
 
+const SHOW_OTHERS_SETTING = createBoolSetting(
+    "price-change.show-others",
+    "Show others",
+    false)
+
 export function ShowPriceChange() {
     const history = useLatestOrDefault(MarketHistoryData$, []);
     const inventory = useLatestValue(InventoryData$)
-    const showOthers = useSettings("price-change.show-others", false);
+    const showOthers = useSetting(SHOW_OTHERS_SETTING);
 
     if (inventory === null || history.length === 0) {
         return <>No data</>
@@ -144,7 +149,7 @@ export function ShowPriceChange() {
                     : <tr>
                         <th colSpan={2}>
                             {"Others(<1%)"}
-                            <button onClick={() => saveSettings("price-change.show-others", true)}>+</button>
+                            <button onClick={() => updateSetting(SHOW_OTHERS_SETTING, true)}>+</button>
                         </th>
                         {history.map(marketData => <td key={marketData.timestamp} colSpan={2}>
                             <ShowNumber
@@ -157,8 +162,7 @@ export function ShowPriceChange() {
             <tfoot>
             <tr>
                 <th colSpan={2}>Total
-                    {showOthers ? <button onClick={() =>
-                        saveSettings("price-change.show-others", false)}>
+                    {showOthers ? <button onClick={() => updateSetting(SHOW_OTHERS_SETTING, false)}>
                         {"-(<1%)"}
                     </button> : <></>}
                 </th>

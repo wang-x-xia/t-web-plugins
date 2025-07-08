@@ -8,7 +8,7 @@ import {getActionName} from "../engine/action";
 
 import {AllLoadedEvent} from "../engine/engine-event";
 import {InventoryItemChanges$, type ItemChangesData, mergeItemChangesData} from "../engine/inventory";
-import {type StoreDefine, storeSubject} from "../engine/store";
+import {defineStore, storeSubject} from "../engine/store";
 import {AddView} from "../view";
 
 
@@ -37,13 +37,13 @@ interface HourChangesData {
     unknown: ItemChangesData
 }
 
-const ItemChangesStore: StoreDefine<HourChangesData[]> = {
+const ItemChangesStore = defineStore<HourChangesData[]>({
     id: "item-changes",
     name: "Item Changes",
     enableSettings: true,
     characterBased: true,
     defaultValue: [],
-}
+})
 
 const InventoryChangesData$ = storeSubject(ItemChangesStore);
 InventoryItemChanges$.subscribe(({added, removed, cause, time}) => {

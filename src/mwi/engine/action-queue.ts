@@ -3,15 +3,15 @@ import {info} from "../../shared/log";
 import {jsonCopy} from "../../shared/utils";
 import type {ActionData} from "../api/action-type";
 import {ActionsUpdatedData$, InitCharacterData$} from "./engine-event";
-import {type StoreDefine, storeSubject} from "./store";
+import {defineStore, storeSubject} from "./store";
 
-export const ActionQueueStore: StoreDefine<ActionData[]> = {
+export const ActionQueueStore = defineStore<ActionData[]>({
     id: "action-queue",
     name: "Action Queue",
     defaultValue: [],
     enableSettings: false,
     characterBased: true,
-};
+});
 
 export const ActionQueue$ = storeSubject(ActionQueueStore);
 

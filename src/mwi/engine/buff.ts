@@ -23,7 +23,7 @@ import {
 import {getClientData} from "./client";
 import {InitCharacterData$} from "./engine-event";
 import {Equipments$} from "./equipment";
-import {type StoreDataOfSubject, StoreDefine, storeSubject} from "./store";
+import {defineStore, type StoreDataOfSubject, storeSubject} from "./store";
 
 export function getBuffTypeName(action: AnyBuffType) {
     return getClientData().buffTypeDetailMap[action].name
@@ -140,7 +140,7 @@ export function createEmptyBuffData(): BuffData {
     }
 }
 
-const BuffDataStore: StoreDefine<Record<Exclude<AnyActionType, CombatActionType>, BuffData>> = {
+const BuffDataStore = defineStore<Record<Exclude<AnyActionType, CombatActionType>, BuffData>>({
     id: "buff-data",
     name: "Buff Data",
     characterBased: true,
@@ -157,7 +157,7 @@ const BuffDataStore: StoreDefine<Record<Exclude<AnyActionType, CombatActionType>
         [AlchemyActionType.Alchemy]: createEmptyBuffData(),
         [EnhancingActionType.Enhancing]: createEmptyBuffData(),
     },
-}
+})
 
 
 export const BuffData$ = storeSubject(BuffDataStore);

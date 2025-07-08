@@ -1,10 +1,10 @@
 import * as React from "react";
-import {useEffect, useRef, useState} from "react";
+import {useEffect, useMemo, useRef, useState} from "react";
 import {createRoot} from "react-dom/client";
 import {Rnd} from "react-rnd";
 import {log, warn} from "../shared/log";
+import {createBoolSetting, createInternalSetting, getSetting, updateSetting, useSetting} from "../shared/settings";
 import viewStyles from "./component/view.module.css";
-import {loadSettings, saveSettings, useSettings} from "./settings";
 
 export function setupApp() {
     const container = document.createElement("div")
@@ -33,16 +33,15 @@ export function AddView(child: ChildView) {
     }
 }
 
+const POSITION_SETTINGS = createInternalSetting(
+    "view.position", "Position",
+    {x: 0, y: 0, width: "400px", height: "400px"})
+
 function App() {
     const [show, setShow] = useState(true);
     const [editMode, setEditMode] = useState(false);
     const [children, setChildren] = useState<ChildView[]>(childrenBefore);
-    const position = useRef(loadSettings("view.position", {
-        x: 0,
-        y: 0,
-        width: "400px",
-        height: "400px",
-    }))
+    const position = useRef(getSetting(POSITION_SETTINGS));
 
     useEffect(() => {
         addView = (child) => {
@@ -98,7 +97,7 @@ function App() {
                     <button onClick={() => {
                         setEditMode(!editMode);
                         if (editMode) {
-                            saveSettings("view.position", position.current);
+                            updateSetting(POSITION_SETTINGS, position.current);
                         }
                     }}>{editMode ? "Save" : "Move"}
                     </button>
@@ -117,25 +116,21 @@ function App() {
 }
 
 function ViewChild({id, name, node}: ChildView) {
-    const show = useSettings(`view.${id}.show`, true);
+    const setting = useMemo(() =>
+        createBoolSetting(`view.${id}.show`, `Show ${name}`, true), [id, name]);
+    const show = useSetting(setting);
 
     if (!show) {
         return <div className={viewStyles.child}>
             {name}
-            <button onClick={() => {
-                saveSettings(`view.${id}.show`, true);
-            }}>+
-            </button>
+            <button onClick={() => updateSetting(setting, true)}>+</button>
         </div>
     }
 
     return <div className={viewStyles.child}>
         <div>
             {name}
-            <button onClick={() => {
-                saveSettings(`view.${id}.show`, false);
-            }}>-
-            </button>
+            <button onClick={() => updateSetting(setting, false)}>-</button>
         </div>
         {node}
     </div>

@@ -1,5 +1,5 @@
 import {InitCharacterSubject} from "./engine-event";
-import {type StoreDefine, storeSubject} from "./store";
+import {defineStore, storeSubject} from "./store";
 
 export enum EquipmentTool {
     AlchemyTool = "/item_locations/alchemy_tool",
@@ -43,13 +43,13 @@ export function getEquipmentLocationByHrid(hrid: string): EquipmentLocation | Eq
         Object.values(EquipmentTool).find((tool) => tool === hrid) || null;
 }
 
-const EquipmentStore: StoreDefine<Record<EquipmentLocation | EquipmentTool, EquipmentItem>> = {
+const EquipmentStore = defineStore<Record<EquipmentLocation | EquipmentTool, EquipmentItem>>({
     id: "equipment",
     name: "Equipment",
     characterBased: true,
     enableSettings: true,
     defaultValue: {} as Record<EquipmentLocation | EquipmentTool, EquipmentItem>,
-}
+})
 
 export const Equipments$ = storeSubject(EquipmentStore);
 InitCharacterSubject.subscribe((data) => {
