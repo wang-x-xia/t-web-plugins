@@ -139,9 +139,9 @@ function ShowAssert() {
             <YAxis tickFormatter={it => formatNumber(it as number)}/>
             <Tooltip labelFormatter={it => formatTimestamp(it)}
                      formatter={value => formatNumber(value as number)}/>
-            <Area name="Items" dataKey="itemTotal" stackId="1"/>
-            <Area name="Cowbell" dataKey={it => it.cowbell.total} stackId="1"/>
-            <Area name="Coin" dataKey="coin" stackId="1"/>
+            <Area name="Items" dataKey="itemTotal" stackId="1" stroke="#63EBB1" fill="#63EBB1"/>
+            <Area name="Cowbell" dataKey={it => it.cowbell.total} stackId="1" stroke="#63EBDF" fill="#63EBDF"/>
+            <Area name="Coin" dataKey="coin" stackId="1" stroke="#63CAEB" fill="#63CAEB"/>
         </AreaChart>
     </>
 }
