@@ -6,7 +6,9 @@ export function getItemName(itemHrid: string): string {
 
 
 export enum SpecialItems {
-    Coin = "/items/coin"
+    Coin = "/items/coin",
+    CowBell = "/items/cowbell",
+    BagOf10CowBells = "/items/bag_of_10_cowbells",
 }
 
 export enum ItemCategory {

@@ -1,6 +1,11 @@
 import * as React from "react";
 
 export function ShowTimestamp({value}: { value: number }) {
+    return <>{formatTimestamp(value)}</>;
+}
+
+
+export function formatTimestamp(value: number) {
     const date = new Date(value);
 
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -10,5 +15,5 @@ export function ShowTimestamp({value}: { value: number }) {
     const minutes = String(date.getMinutes()).padStart(2, '0');
     const seconds = String(date.getSeconds()).padStart(2, '0');
 
-    return <>{`${(date.getFullYear())}-${month}-${day} ${hours}:${minutes}:${seconds}`}</>;
+    return `${(date.getFullYear())}-${month}-${day} ${hours}:${minutes}:${seconds}`
 }

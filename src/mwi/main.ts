@@ -2,6 +2,7 @@ import {log} from "../shared/log";
 import {setupEngineHook} from "./engine/engine";
 import {setupMarketData} from "./engine/market";
 import {actionStatPlugin} from "./plugins/action-stat-plugin";
+import {assetPlugin} from "./plugins/asset-plugin";
 import {inventoryChangesPlugin} from "./plugins/inventory-changes-plugin";
 import {lootTrackerPlugin} from "./plugins/loot-tracker";
 import {priceChangePlugin} from "./plugins/price-change-plugin";
@@ -25,3 +26,4 @@ lootTrackerPlugin()
 actionStatPlugin()
 inventoryChangesPlugin()
 priceChangePlugin()
+assetPlugin()

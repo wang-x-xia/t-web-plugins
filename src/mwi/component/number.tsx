@@ -1,5 +1,5 @@
 import * as React from "react";
-import {createStringSelectSetting, useSetting} from "../../shared/settings";
+import {createStringSelectSetting, getSetting, useSetting} from "../../shared/settings";
 
 export enum NumberFormat {
     Short = "short",
@@ -23,8 +23,14 @@ export function ShowNumber({value}: { value: number }) {
     }
 }
 
-export function ShowPercent({value}: { value: number }) {
-    return <>{(value * 100).toPrecision(4)}%</>;
+export function formatNumber(value: number): string {
+    switch (getSetting(NUMBER_FORMAT_SETTING)) {
+        default:
+        case NumberFormat.Short:
+            return formatWithSuffixes(value);
+        case NumberFormat.Full:
+            return formatWithThousandsSeparators(value);
+    }
 }
 
 export function formatWithThousandsSeparators(num: number): string {
@@ -60,6 +66,11 @@ export function formatWithSuffixes(num: number): string {
         return formatWithThousandsSeparators(num / 1e3) + 'K';
     }
     return formatWithThousandsSeparators(num);
+}
+
+
+export function ShowPercent({value}: { value: number }) {
+    return <>{(value * 100).toPrecision(4)}%</>;
 }
 
 export function ShowSize({value}: { value: number }) {
