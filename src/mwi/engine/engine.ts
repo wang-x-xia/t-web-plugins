@@ -16,30 +16,15 @@ import {
     LootLogData$,
     LootOpened$,
     OpenLoot$,
-    PostMarketOrder$
+    PostMarketOrder$,
+    Request$,
+    Response$
 } from "./engine-event";
 import {updateInventory} from "./inventory";
 
 export function setupEngineHook() {
-    unsafeWindow.WebSocket = new Proxy(WebSocket, {
-        construct(target, args: ConstructorParameters<typeof WebSocket>) {
-            log("ws-created", {"args": args});
-            const ws = new target(...args);
-            ws.addEventListener("message", (event) => {
-                processResponse(JSON.parse(event.data));
-            });
-            const _send = ws.send.bind(ws);
-            ws.send = (data: any) => {
-                processRequest(JSON.parse(data));
-                _send(data);
-            };
-            return ws;
-        },
-    });
-    log("ws-hooked", {});
-    if (localStorage.getItem("initClientData") != null) {
-        processResponse(JSON.parse(localStorage.getItem("initClientData")!!));
-    }
+    Request$.subscribe(processRequest);
+    Response$.subscribe(processResponse);
 }
 
 function processRequest(data: any) {
