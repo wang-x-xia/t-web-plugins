@@ -18,6 +18,10 @@ import type {
 } from "../api/request-message-type";
 import type {ItemChangesData} from "./inventory";
 
+// Hook
+export const Request$ = new ReplaySubject<any>(Infinity, 300_000);
+export const Response$ = new ReplaySubject<any>(Infinity, 300_000);
+
 // Request
 export const BuyMooPassWithCowbells$ = new Subject<BuyMooPassWithCowbells>();
 export const ClaimAllMarketListings$ = new Subject<ClaimAllMarketListings>();
