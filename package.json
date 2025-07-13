@@ -4,8 +4,8 @@
   "description": "Tampermonkey Scripts",
   "type": "module",
   "scripts": {
-    "mwi": "rollup -c --environment NODE_ENV:production",
-    "mwi-dev": "rollup -c --environment NODE_ENV:development"
+    "mwi": "node src/mwi/build.js --production",
+    "mwi-dev": "node src/mwi/build.js"
   },
   "repository": {
     "type": "git",
@@ -29,6 +29,7 @@
     "@types/tampermonkey": "^5.0.4",
     "rollup": "^4.41.1",
     "rollup-plugin-postcss": "^4.0.2",
+    "rollup-plugin-sizes": "^1.1.0",
     "tslib": "^2.8.1",
     "typescript": "^5.8.3",
     "typescript-plugin-css-modules": "^5.1.0"
