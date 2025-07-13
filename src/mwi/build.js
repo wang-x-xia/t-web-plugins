@@ -25,7 +25,7 @@ Base on the above, the workflow is as follows:
 /**
  * Add external modules for cdn
  */
-const external = ['react', 'react-dom', 'react-dom/client']
+const external = ['react', 'react-dom', 'react-dom/client', 'recharts']
 
 const esmBundle = await rollup({
     input: [
