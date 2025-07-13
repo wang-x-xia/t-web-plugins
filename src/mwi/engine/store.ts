@@ -28,13 +28,18 @@ export interface StoreDefinition<T> {
     defaultValue: T;
 
     enableSetting: Setting<boolean> | null;
+
+    data$: BehaviorSubject<T>;
 }
 
-export function defineStore<T>(store: Omit<StoreDefinition<T>, "enableSetting">) {
-    return {
+export function defineStore<T>(store: Omit<StoreDefinition<T>, "enableSetting" | "data$">) {
+    const result: StoreDefinition<T> = {
         ...store,
-        enableSetting: store.enableSettings ? createBoolSetting(`store.${store.id}.enable`, store.name, true) : null
-    };
+        enableSetting: store.enableSettings ? createBoolSetting(`store.${store.id}.enable`, store.name, true) : null,
+        data$: null as any,
+    }
+    result.data$ = createStoreSubject(result);
+    return result;
 }
 
 export interface StoredValue<T> {
@@ -97,7 +102,7 @@ export function resetStoreData<T>(store: StoreDefinition<T>) {
     StoreSizeChange$.next({store, size: 0});
 }
 
-export function storeSubject<T>(store: StoreDefinition<T>): BehaviorSubject<T> {
+function createStoreSubject<T>(store: StoreDefinition<T>): BehaviorSubject<T> {
     const {defaultValue} = store;
     const subject = new BehaviorSubject<T>(defaultValue);
 
@@ -116,6 +121,10 @@ export function storeSubject<T>(store: StoreDefinition<T>): BehaviorSubject<T> {
     }
     subject.subscribe(data => updateStoreData(store, data));
     return subject;
+}
+
+export function storeSubject<T>(store: StoreDefinition<T>): BehaviorSubject<T> {
+    return store.data$;
 }
 
 

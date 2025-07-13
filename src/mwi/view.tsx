@@ -132,7 +132,9 @@ function ViewChild({id, name, node}: ChildView) {
             {name}
             <button onClick={() => updateSetting(setting, false)}>-</button>
         </div>
-        {node}
+        <div className={viewStyles["child-content"]}>
+            {node}
+        </div>
     </div>
 
 }

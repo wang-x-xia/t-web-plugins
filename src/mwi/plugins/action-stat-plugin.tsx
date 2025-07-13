@@ -1,12 +1,14 @@
 import * as React from "react";
 import {uniqueStrings} from "../../shared/list";
 import {useLatestValue} from "../../shared/rxjs-react";
+import {Expandable} from "../component/expandable";
 import {ShowItem} from "../component/item";
 import {ShowNumber, ShowPercent} from "../component/number";
 import {ShowStoreActions} from "../component/store";
 import {getActionName} from "../engine/action";
 
 import {ActionCompleteEvent, type ActionCompleteEventData, AllLoadedEvent} from "../engine/engine-event";
+import {SpecialItems} from "../engine/item";
 import {defineStore, storeSubject} from "../engine/store";
 import {AddView} from "../view";
 
@@ -178,7 +180,9 @@ export function ShowEventStats({events}: { events: ActionCompleteEventData[] }) 
             <tr>
                 {items.map(hrid =>
                     <td key={hrid}>
-                        <ShowItemStat itemHrid={hrid} events={events}/>
+                        <Expandable defaultExpand={hrid !== SpecialItems.Coin}>
+                            <ShowItemStat itemHrid={hrid} events={events}/>
+                        </Expandable>
                     </td>
                 )}
             </tr>
