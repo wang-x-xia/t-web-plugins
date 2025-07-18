@@ -35,6 +35,9 @@ function getPriceByHrid(hrid: string, field: "a" | "b", enhancementLevel: number
         // Coin is always 1
         return 1;
     }
+    if (hrid === SpecialItems.CowBell) {
+        return getPriceByHrid(SpecialItems.BagOf10CowBells, field, enhancementLevel, marketData) / 10;
+    }
     if (marketData.marketData[hrid] === undefined) {
         if (isItemOpenable(hrid)) {
             const openableItem = getOpenableItem(hrid)!;

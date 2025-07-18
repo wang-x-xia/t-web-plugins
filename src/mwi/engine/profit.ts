@@ -1,9 +1,9 @@
-// @ts-ignore
-import * as jStat from 'jstat';
 import {sum} from "../../shared/list";
 import {DropInfo} from "../api/action-type";
 import {type BuffData, NormalBuffType} from "./buff-type";
 import {getClientData} from "./client";
+import {LuckyModel, luckyModelFactory} from "./drop-math";
+import {getOpenableItemDropTable} from "./item";
 import {getBuyPriceByHrid, getSellPriceByHrid} from "./market";
 
 export enum DropType {
@@ -26,7 +26,7 @@ export enum DropType {
     /**
      * Rare loot, buffed by RareFind. And also has its drop table
      */
-    RareLoot = "rare",
+    RareLoot = "rare-loot",
 }
 
 
@@ -64,8 +64,11 @@ export interface ItemDropInfo {
     maxCount: number;
 }
 
-export type ItemDropIncome = {
+export type ItemDropIncome = NormalItemDropIncome | LootItemDropIncome
+
+export interface NormalItemDropIncome {
     type: DropType.Output | DropType.Normal | DropType.Essence | DropType.Rare;
+    model: LuckyModel;
     hrid: string;
     enhancementLevel?: number;
     count: number;
@@ -73,15 +76,18 @@ export type ItemDropIncome = {
     income: number;
     originDrop: ItemDropInfo;
     buffedDrop: ItemDropInfo;
-} | {
+}
+
+export interface LootItemDropIncome {
     type: DropType.RareLoot;
+    model: LuckyModel;
     hrid: string;
     count: number;
-    price: number;
     income: number;
     originDrop: ItemDropInfo;
     buffedDrop: ItemDropInfo;
     outputs: {
+        model: LuckyModel;
         hrid: string;
         count: number;
         price: number;
@@ -130,7 +136,7 @@ export function getActionProfit({action, hours, mode, lucky, buff}: ProfitConfig
     });
     const cost = sum(inputs.map(input => input.cost));
 
-    const outputs = [
+    const outputs: ItemDropIncome[] = [
         ...(actionDetails.outputItems ?? []).map(output => {
             const count = output.count * times;
             const price = getSellPriceByHrid(output.itemHrid);
@@ -141,19 +147,19 @@ export function getActionProfit({action, hours, mode, lucky, buff}: ProfitConfig
             }
             return ({
                 type: DropType.Output,
+                model: luckyModelFactory(times, 1.0, output.count, output.count),
                 hrid: output.itemHrid,
                 count,
                 price,
                 income: count * price,
                 originDrop: drop,
                 buffedDrop: drop,
-            });
+            }) as NormalItemDropIncome;
         }),
         ...getDropIncome(times, mode, lucky, buff, DropType.Normal, actionDetails.dropTable ?? []),
         ...getDropIncome(times, mode, lucky, buff, DropType.Essence, actionDetails.essenceDropTable ?? []),
         ...getDropIncome(times, mode, lucky, buff, DropType.Rare, actionDetails.rareDropTable ?? []),
     ]
-
     const income = sum(outputs.map(output => output.income));
     const profit = income - cost;
 
@@ -172,7 +178,6 @@ export function getActionProfit({action, hours, mode, lucky, buff}: ProfitConfig
 
 function getDropIncome(times: number, mode: "avg" | "lucky", lucky: number, buff: BuffData, dropType: DropType, drops: DropInfo[]): ItemDropIncome[] {
     return (drops ?? []).map(({itemHrid, minCount, maxCount, dropRate}) => {
-        const price = getSellPriceByHrid(itemHrid);
         let buffedDropRate = dropRate;
         switch (dropType) {
             case DropType.Essence:
@@ -190,56 +195,60 @@ function getDropIncome(times: number, mode: "avg" | "lucky", lucky: number, buff
                 buffedMaxCount *= 1 + buff[NormalBuffType.Gathering].value;
                 break;
         }
-        const count = getDropCount(times, mode, lucky, buffedDropRate, buffedMinCount, buffedMaxCount);
-        return {
-            type: dropType,
-            hrid: itemHrid,
-            count,
-            price,
-            income: count * price,
-            originDrop: {
-                rate: dropRate,
-                minCount,
-                maxCount,
-            },
-            buffedDrop: {
-                rate: buffedDropRate,
-                minCount: buffedMinCount,
-                maxCount: buffedMaxCount,
-            },
+        const model = luckyModelFactory(times, buffedDropRate, buffedMinCount, buffedMaxCount);
+        const count = (mode === "avg") ?
+            times * buffedDropRate * (buffedMinCount + buffedMaxCount) / 2 :
+            model.getCountOfLucky(lucky);
+        const open = getOpenableItemDropTable(itemHrid)
+        if (open) {
+            // Ignore self drop
+            const outputs = getDropIncome(count, mode, lucky, buff, DropType.Output, open)
+            return {
+                type: DropType.RareLoot,
+                model,
+                hrid: itemHrid,
+                count,
+                income: sum(outputs.map(output => output.income)),
+                originDrop: {
+                    rate: dropRate,
+                    minCount,
+                    maxCount,
+                },
+                buffedDrop: {
+                    rate: buffedDropRate,
+                    minCount: buffedMinCount,
+                    maxCount: buffedMaxCount,
+                },
+                outputs: outputs.map(output => ({
+                    hrid: output.hrid,
+                    count: output.count,
+                    model: output.model,
+                    price: (output as any).price,
+                    income: output.income,
+                    drop: output.originDrop,
+                }))
+            } as LootItemDropIncome
+        } else {
+            const price = getSellPriceByHrid(itemHrid);
+            return {
+                type: dropType,
+                model,
+                hrid: itemHrid,
+                count,
+                price,
+                income: count * price,
+                originDrop: {
+                    rate: dropRate,
+                    minCount,
+                    maxCount,
+                },
+                buffedDrop: {
+                    rate: buffedDropRate,
+                    minCount: buffedMinCount,
+                    maxCount: buffedMaxCount,
+                },
+            } as NormalItemDropIncome
         }
+
     })
-}
-
-
-function getDropCount(
-    times: number,
-    mode: "avg" | "lucky",
-    lucky: number,
-    dropRate: number,
-    minCount: number,
-    maxCount: number,
-) {
-    if (mode === "avg") {
-        return times * dropRate * (minCount + maxCount) / 2;
-    }
-    const mean = (minCount + maxCount) / 2 * dropRate * times;
-    const np = dropRate * times;
-    const np_1 = (1 - dropRate) * times;
-    if (times >= 20 && np >= 5 && np_1 >= 5) {
-        // If minCount === maxCount, then std = Math.sqrt((p * (1 - p)) * count)
-        const std = Math.sqrt(times * (dropRate * Math.pow(maxCount - minCount, 2) / 12 + (dropRate * (1 - dropRate) * Math.pow(maxCount + minCount, 2) / 4)));
-        return Math.round(jStat.normal.inv(lucky, mean, std));
-    }
-    if (times >= 20) {
-        let cdf = 0
-        for (let i = 0; i < times; i++) {
-            cdf += jStat.poisson.pdf(i, mean);
-            if (cdf >= lucky) {
-                return i;
-            }
-        }
-        return times;
-    }
-    return 0;
 }

@@ -1,3 +1,4 @@
+import type {DropInfo} from "../api/action-type";
 import {getClientData} from "./client";
 
 export function getItemName(itemHrid: string): string {
@@ -31,6 +32,10 @@ export interface OpenableItem {
 
 export function isItemOpenable(itemHrid: string): boolean {
     return getClientData().openableLootDropMap[itemHrid] !== undefined;
+}
+
+export function getOpenableItemDropTable(itemHrid: string):  DropInfo[] | null {
+    return getClientData().openableLootDropMap[itemHrid] ?? null;
 }
 
 export function getOpenableItem(itemHrid: string): OpenableItem | null {

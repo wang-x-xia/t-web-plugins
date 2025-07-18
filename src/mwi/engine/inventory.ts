@@ -25,7 +25,7 @@ export interface InventoryData extends WithCharacterId {
     }
 }
 
-export const InventoryData$ = new BehaviorSubject<InventoryData>(null as any);
+export const InventoryData$ = new BehaviorSubject<InventoryData | null>(null);
 InitCharacterData$.pipe(
     map(data => {
         const localInventory = {} as Record<string, Record<number, number>>;
@@ -173,7 +173,8 @@ ItemUpdatedData$.subscribe(({endCharacterItems}) => {
 
 
 export function updateInventory(endCharacterItems: CharacterItem[], cause: ItemChangeCause): ItemChanges {
-    const inventoryBefore = InventoryData$.getValue().inventory
+    const before = InventoryData$.getValue()!;
+    const inventoryBefore = before.inventory
     const inventoryAfter = jsonCopy(inventoryBefore);
     const diffs = endCharacterItems
         .filter(item => item.itemLocationHrid === "/item_locations/inventory")
@@ -184,7 +185,7 @@ export function updateInventory(endCharacterItems: CharacterItem[], cause: ItemC
             inventoryAfter[item.itemHrid][item.enhancementLevel] = item.count;
             return {hrid: item.itemHrid, level: item.enhancementLevel, count: diff};
         });
-    InventoryData$.next({...InventoryData$.getValue(), inventory: inventoryAfter});
+    InventoryData$.next({...before, inventory: inventoryAfter});
     const result = {
         added: diffs.filter(diff => diff.count > 0),
         removed: diffs.filter(diff => diff.count < 0),
