@@ -9,6 +9,7 @@ import {
     DropType,
     getActionProfit,
     type ItemDropIncome,
+    type ItemDropInfo,
     type ItemInputCost,
     type ProfitConfiguration,
     type ProfitData
@@ -166,26 +167,54 @@ export function ShowItemDropIncome({outputs, income: totalIncome}: { outputs: It
             </tr>
             </thead>
             <tbody>
-            {
-                outputs.map((output) => {
-                    const {type, hrid, count, price, income, originDrop} = output
-                    return <tr key={`${type}-${hrid}-${originDrop.rate}`}>
-                        <td>{
-                            type === DropType.RareLoot ?
-                                <ShowItem hrid={hrid}/> :
-                                <ShowItem hrid={hrid} enhancementLevel={output.enhancementLevel ?? 0}/>
-                        }</td>
-                        <td><ShowDropInfo output={output}/></td>
-                        <td><ShowNumber value={count}/></td>
-                        <td><ShowNumber value={price}/></td>
-                        <td><ShowNumber value={income}/></td>
-                        <td><ShowPercent value={income / totalIncome}/></td>
-                    </tr>;
-                })
+            {outputs.map((output) =>
+                <ShowDropIncome key={`${output.type}-${output.hrid}-${output.originDrop.rate}`} output={output}
+                                totalIncome={totalIncome}/>)
             }
             </tbody>
         </table>
     </Expandable>
+}
+
+function ShowDropIncome({output, totalIncome}: { output: ItemDropIncome, totalIncome: number }) {
+    if (output.type === DropType.RareLoot) {
+        const {hrid, count, income, outputs} = output;
+        return <>
+            <tr>
+                <th><ShowItem hrid={hrid}/></th>
+                <td><ShowDropInfo output={output}/></td>
+                <td><ShowNumber value={count}/></td>
+                <td><ShowNumber value={income / count}/></td>
+                <td><ShowNumber value={income}/></td>
+                <td><ShowPercent value={income / totalIncome}/></td>
+            </tr>
+            {outputs.map(({
+                              hrid: childHrid,
+                              count: childCount,
+                              price: childPrice,
+                              income: childIncome,
+                              drop: childDrop
+                          }) => <tr key={`${childHrid}-${childDrop.rate}`}>
+                <td>| <ShowItem hrid={childHrid}/></td>
+                <td><ShowChildDropInfo drop={childDrop}/></td>
+                <td><ShowNumber value={childCount}/></td>
+                <td><ShowNumber value={childPrice}/></td>
+                <td><ShowNumber value={childIncome}/></td>
+                <td><ShowPercent value={childIncome / totalIncome}/></td>
+            </tr>)
+            }
+        </>;
+    } else {
+        const {hrid, count, price, income, enhancementLevel} = output
+        return <tr>
+            <td><ShowItem hrid={hrid} enhancementLevel={enhancementLevel}/></td>
+            <td><ShowDropInfo output={output}/></td>
+            <td><ShowNumber value={count}/></td>
+            <td><ShowNumber value={price}/></td>
+            <td><ShowNumber value={income}/></td>
+            <td><ShowPercent value={income / totalIncome}/></td>
+        </tr>;
+    }
 }
 
 
@@ -206,11 +235,22 @@ function ShowDropInfo({output}: { output: ItemDropIncome }) {
         case DropType.Output:
             return <>Output</>
         case DropType.Normal:
-            return <> Output{dropInfo}</>
+            return <>Output{dropInfo}</>
         case DropType.Essence:
             return <>Essence{dropInfo}</>
         case DropType.Rare:
         case DropType.RareLoot:
             return <>Rare{dropInfo}</>
     }
+}
+
+function ShowChildDropInfo({drop}: { drop: ItemDropInfo }) {
+    return <>Open{<Expandable>
+        <div>{
+            drop.minCount === drop.maxCount ?
+                <><ShowNumber value={drop.minCount}/></> :
+                <><ShowNumber value={drop.minCount}/> - <ShowNumber value={drop.maxCount}/></>
+        }</div>
+        <div><ShowPercent value={drop.rate}/></div>
+    </Expandable>}</>
 }

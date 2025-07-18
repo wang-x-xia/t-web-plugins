@@ -51,6 +51,9 @@ const AssertStore = defineStore<AssetData[]>({
 })
 
 combineLatest({inventory: InventoryData$, market: MarketData$}).subscribe(({inventory, market}) => {
+    if (inventory === null) {
+        return;
+    }
     const inventoryTime = new Date().setMinutes(0, 0, 0);
 
     const tradableCowbell = (inventory.inventory[SpecialItems.BagOf10CowBells][0] ?? 0) * 10;
