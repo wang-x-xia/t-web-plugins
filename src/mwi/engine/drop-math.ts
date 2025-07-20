@@ -1,5 +1,6 @@
 // @ts-ignore
 import * as jStat from 'jstat';
+import type {Observable} from "rxjs";
 import {sum} from "../../shared/list";
 import {log} from "../../shared/log";
 
@@ -46,12 +47,15 @@ export function luckyModelFactory(times: number, dropRate: number, minCount: num
             return new NormalDistribution(times, dropRate, minCount, maxCount);
         }
     }
+
     if (maxCount >= 100) {
-        return new NormalDistribution(times, dropRate, minCount, maxCount);
+        const factor = maxCount / 100;
+        const delegate = new Bruteforce(times, dropRate, Math.round(minCount / factor), Math.round(maxCount / factor));
+        return new TimesOfCalculate(delegate, factor);
     } else if (maxCount >= 20) {
-        return new DirectCalculate(times, dropRate, Math.round(minCount), Math.round(maxCount));
+        return new Bruteforce(times, dropRate, Math.round(minCount), Math.round(maxCount));
     } else {
-        const delegate = new DirectCalculate(times, dropRate, Math.round(minCount * 5), Math.round(maxCount * 5));
+        const delegate = new Bruteforce(times, dropRate, Math.round(minCount * 5), Math.round(maxCount * 5));
         return new TimesOfCalculate(delegate, 0.2);
     }
 }
@@ -96,16 +100,20 @@ class NormalDistribution extends LuckyModel {
         super(times, dropRate, minCount, maxCount);
         this.mean = (minCount + maxCount) / 2 * dropRate * times;
         this.std = Math.sqrt(times * (dropRate * Math.pow(maxCount - minCount, 2) / 12 + (dropRate * (1 - dropRate) * Math.pow(maxCount + minCount, 2) / 4)));
+        this.modelMinValue = 0;
+        this.modelMaxValue = this.times * this.maxCount;
+        // Shrink
         this.modelMinValue = this.getCountOfLucky(0.001);
         this.modelMaxValue = this.getCountOfLucky(0.999);
     }
 
     getCountOfLucky(lucky: number): number {
-        return Math.round(jStat.normal.inv(lucky, this.mean, this.std));
+        const count = Math.round(jStat.normal.inv(lucky, this.mean, this.std));
+        return Math.max(this.modelMinValue, Math.min(this.modelMaxValue, count));
     }
 
     getCountOfLuckyRange(luckyRange: number[]): number[] {
-        return luckyRange.map(l => Math.round(jStat.normal.inv(l, this.mean, this.std)));
+        return luckyRange.map(l => this.getCountOfLucky(l));
     }
 
     getLuckyUntilCount(count: number): number {
@@ -158,49 +166,60 @@ class PoissonDistribution extends LuckyModel {
 }
 
 
-class DirectCalculate extends LuckyModel {
+class Bruteforce extends LuckyModel {
     readonly modelMaxValue: number;
     readonly modelMinValue: number;
-    private lazyData: number[] = []
+    private lazyPdf: number[] = []
+    private lazyCdf: number[] = []
 
     constructor(times: number, dropRate: number, minCount: number, maxCount: number) {
         super(times, dropRate, minCount, maxCount);
         this.modelMinValue = 0;
         this.modelMaxValue = this.times * this.maxCount;
-        log("direct", this);
+        log("bruteforce", this);
     }
 
-    get data(): number[] {
-        if (this.lazyData.length === 0) {
-            const unit = this.dropRate * (this.maxCount - this.minCount + 1);
-            let previous: number[] = [1];
-            for (let _ = 0; _ < this.times; _++) {
-                // the current is [0, previous.max + maxCount]
-                // previous.max = previous.length - 1
-                // new current length = previous.max + maxCount + 1 = previous.length + maxCount
-                const current: number[] = new Array(previous.length + this.maxCount).fill(0);
-                for (let count = 0; count < previous.length; count++) {
-                    // Not dropped
-                    current[count] += previous[count] * (1 - this.dropRate);
-                    for (let j = this.minCount; j <= this.maxCount; j++) {
-                        // Dropped j
-                        current[count + j] += previous[count] * unit;
-                    }
-                }
-                previous = current;
-            }
-            this.lazyData = new Array(previous.length).fill(0);
-            for (let i = 0; i < previous.length; i++) {
-                this.lazyData[i] = sum(previous.slice(0, i + 1));
-            }
-            log("direct-load-data", this);
+    private init(): void {
+        if (this.lazyPdf.length > 0) {
+            return
         }
-        return this.lazyData;
+        const unit = this.dropRate / (this.maxCount - this.minCount + 1);
+        let previous: number[] = [1];
+        for (let _ = 0; _ < this.times; _++) {
+            // the current is [0, previous.max + maxCount]
+            // previous.max = previous.length - 1
+            // new current length = previous.max + maxCount + 1 = previous.length + maxCount
+            const current: number[] = new Array(previous.length + this.maxCount).fill(0);
+            for (let count = 0; count < previous.length; count++) {
+                const possible = previous[count]
+                if (possible === 0) {
+                    continue;
+                }
+                // Not dropped
+                current[count] += possible * (1 - this.dropRate);
+                for (let j = this.minCount; j <= this.maxCount; j++) {
+                    // Dropped j
+                    current[count + j] += possible * unit;
+                }
+            }
+            previous = current;
+        }
+        this.lazyPdf = previous;
+        this.lazyCdf = new Array(previous.length).fill(0);
+        for (let i = 0; i < previous.length; i++) {
+            this.lazyCdf[i] = sum(previous.slice(0, i + 1));
+        }
+        log("bruteforce-init-data", this);
+    }
+
+    get cdf(): number[] {
+        this.init()
+        return this.lazyCdf;
     }
 
     getCountOfLuckyRange(luckyRange: number[]): number[] {
         return luckyRange.map(l => {
-            const index = this.data.findIndex(cdf => cdf >= l);
+            const index = this.cdf.findIndex(cdf => cdf >= l);
             return index === -1 ? this.modelMaxValue : index;
         });
     }
@@ -213,9 +232,9 @@ class DirectCalculate extends LuckyModel {
 class TimesOfCalculate extends LuckyModel {
 
     readonly factor: number
-    readonly delegate: DirectCalculate
+    readonly delegate: Bruteforce
 
-    constructor(delegate: DirectCalculate, factor: number) {
+    constructor(delegate: Bruteforce, factor: number) {
         super(delegate.times, delegate.dropRate, delegate.minCount * factor, delegate.maxCount * factor);
         this.factor = factor
         this.delegate = delegate
@@ -236,4 +255,29 @@ class TimesOfCalculate extends LuckyModel {
     getLuckyUntilCount(count: number): number {
         return this.delegate.getLuckyUntilCount(count / this.factor);
     }
+}
+
+export interface MonteCarloConfig {
+    times: number
+    items: MonteCarloDrop[]
+}
+
+export interface MonteCarloDrop {
+    dropRate: number
+    price: number
+    minCount: number
+    maxCount: number
+}
+
+interface MonteCarloDropStep {
+    sim(job: number[]): void
+}
+
+export function monteCarloSimulate(config: MonteCarloConfig): Observable<number[]> {
+    const steps: MonteCarloDropStep[] = config.items.map(i => {
+        return {
+            sim(job: number[]) {
+            }
+        };
+    });
 }

@@ -1,5 +1,6 @@
 import {BehaviorSubject, Subject} from "rxjs";
 import {info, log} from "../../shared/log";
+import {useLatestOrDefault} from "../../shared/rxjs-react";
 import {createBoolSetting, getSetting, type Setting} from "../../shared/settings";
 import {InitCharacterData$} from "./engine-event";
 import {isTestServer} from "./server";
@@ -136,4 +137,8 @@ export function exportStore<T>(store: StoreDefinition<T>) {
 export function getStoreSize<T>(store: StoreDefinition<T>): number {
     const data = getStoreData(store);
     return JSON.stringify(data).length;
+}
+
+export function useStoreData<T>(store: StoreDefinition<T>) {
+    return useLatestOrDefault(store.data$, store.defaultValue);
 }

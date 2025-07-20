@@ -193,5 +193,8 @@ export function ShowSettingValue({setting}: { setting: Setting<any> }) {
     if (setting.value.type === "bool") {
         return <input type="checkbox" checked={value} onChange={e => updateSetting(setting, e.target.checked)}/>
     }
+    if (setting.value.type === "integer" || setting.value.type === "float") {
+        return <input type="number" value={value} onChange={e => updateSetting(setting, e.target.valueAsNumber)}/>
+    }
     return <>{value}</>
 }

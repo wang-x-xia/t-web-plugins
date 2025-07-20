@@ -5,6 +5,7 @@ import {actionStatPlugin} from "./plugins/action-stat-plugin";
 import {assetPlugin} from "./plugins/asset-plugin";
 import {inventoryChangesPlugin} from "./plugins/inventory-changes-plugin";
 import {lootTrackerPlugin} from "./plugins/loot-tracker";
+import {lootsStatsPlugin} from "./plugins/loots-stat-plugin";
 import {priceChangePlugin} from "./plugins/price-change-plugin";
 import {foragingPlugin} from "./plugins/profit-plugins";
 import {setupApp} from "./view";
@@ -27,3 +28,4 @@ actionStatPlugin()
 inventoryChangesPlugin()
 priceChangePlugin()
 assetPlugin()
+lootsStatsPlugin()

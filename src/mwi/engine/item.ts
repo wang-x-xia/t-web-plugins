@@ -12,6 +12,12 @@ export enum SpecialItems {
     BagOf10CowBells = "/items/bag_of_10_cowbells",
 }
 
+export enum LootsItems {
+    Coin = "/items/coin",
+    CowBell = "/items/cowbell",
+    BagOf10CowBells = "/items/bag_of_10_cowbells",
+}
+
 export enum ItemCategory {
     AbilityBook = "/item_categories/ability_book",
     Currency = "/item_categories/currency",

@@ -70,7 +70,11 @@ export function formatWithSuffixes(num: number): string {
 
 
 export function ShowPercent({value}: { value: number }) {
-    return <>{(value * 100).toPrecision(4)}%</>;
+    return <>{formatPercent(value)}</>;
+}
+
+export function formatPercent(value: number): string {
+    return (value * 100).toPrecision(4) + '%';
 }
 
 export function ShowSize({value}: { value: number }) {

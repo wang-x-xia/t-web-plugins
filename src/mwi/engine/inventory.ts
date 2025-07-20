@@ -11,7 +11,7 @@ import {
     ClaimMarketListing$,
     InitCharacterData$,
     ItemUpdatedData$,
-    OpenLoot$,
+    LootOpened$,
     PostMarketOrder$
 } from "./engine-event";
 import {getItemCategory, ItemCategory} from "./item";
@@ -64,6 +64,8 @@ export type ItemChangeCause = {
     "type": "quest",
 } | {
     "type": "loot",
+    "hrid": string,
+    "count": number,
 } | {
     "type": "cowbell-store",
 }
@@ -88,8 +90,8 @@ PostMarketOrder$.subscribe(() => {
 ClaimCharacterQuest$.subscribe(() => {
     ItemChangeCause$.next({"type": "quest"});
 })
-OpenLoot$.subscribe(() => {
-    ItemChangeCause$.next({"type": "loot"});
+LootOpened$.subscribe(({openedItem: {itemHrid: hrid, count}}) => {
+    ItemChangeCause$.next({type: "loot", hrid, count});
 })
 
 
