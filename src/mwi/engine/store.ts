@@ -1,13 +1,13 @@
 import {BehaviorSubject, Subject} from "rxjs";
 import {info, log} from "../../shared/log";
 import {createBoolSetting, getSetting, type Setting} from "../../shared/settings";
-import {InitCharacterData$} from "./engine-event";
+import {InitCharacterId$} from "./engine-event";
 import {isTestServer} from "./server";
 
 const CharacterId$ = new BehaviorSubject<string | null>(null);
 
-InitCharacterData$.subscribe(data => {
-    CharacterId$.next(data.character.id);
+InitCharacterId$.subscribe(data => {
+    CharacterId$.next(data);
 });
 
 export const StoreSizeChange$ = new Subject<{ store: StoreDefinition<any>, size: number }>();
@@ -30,13 +30,19 @@ export interface StoreDefinition<T> {
     enableSetting: Setting<boolean> | null;
 
     data$: BehaviorSubject<T>;
+    runtime: StoreRuntime
 }
 
-export function defineStore<T>(store: Omit<StoreDefinition<T>, "enableSetting" | "data$">) {
+export interface StoreRuntime {
+    initData?: StoredValue<any>
+}
+
+export function defineStore<T>(store: Omit<StoreDefinition<T>, "enableSetting" | "data$" | "runtime">) {
     const result: StoreDefinition<T> = {
         ...store,
         enableSetting: store.enableSettings ? createBoolSetting(`store.${store.id}.enable`, store.name, true) : null,
         data$: null as any,
+        runtime: {}
     }
     result.data$ = createStoreSubject(result);
     return result;
@@ -87,6 +93,10 @@ export function updateStoreData<T>(store: StoreDefinition<T>, data: T) {
             return;
         }
     }
+    if (data === store.runtime.initData?.data) {
+        log("skip-update-init-store-data", {store, data});
+        return;
+    }
     const storedData: StoredValue<T> = {updated: Date.now(), data};
     log("update-store-data", {store, storedData});
     const json = JSON.stringify(storedData);
@@ -108,8 +118,9 @@ function createStoreSubject<T>(store: StoreDefinition<T>): BehaviorSubject<T> {
 
     function initStoreData() {
         const data = getStoreData(store);
-        log("use-store-data", {store, data});
+        log("init-store-data", {store, data});
         if (data.data !== null) {
+            store.runtime.initData = data;
             subject.next(data.data);
         }
     }
