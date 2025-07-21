@@ -31,6 +31,7 @@ export const OpenLoot$ = new Subject<OpenLoot>();
 export const PostMarketOrder$ = new Subject<PostMarketOrder>();
 
 // Response
+export const InitCharacterId$ = new Subject<string>();
 export const InitCharacterData$ = new ReplaySubject<InitCharacterData>(1);
 export const LootLogData$ = new ReplaySubject<LootLogData>(1);
 export const ActionCompleteData$ = new Subject<ActionCompletedData>();

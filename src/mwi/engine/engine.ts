@@ -1,6 +1,6 @@
 import type {Subject} from "rxjs";
 import {log} from "../../shared/log";
-import type {ActionCompletedData} from "../api/message-type";
+import type {ActionCompletedData, InitCharacterData} from "../api/message-type";
 import {updateActionData} from "./action-queue";
 import {
     ActionCompleteData$,
@@ -11,6 +11,7 @@ import {
     ClaimCharacterQuest$,
     ClaimMarketListing$,
     InitCharacterData$,
+    InitCharacterId$,
     InitClientSubject,
     ItemUpdatedData$,
     LootLogData$,
@@ -56,12 +57,16 @@ function processResponse(data: any) {
         return;
     }
     log("handle-response", {"type": data.type, "data": data});
+    if (checkType<InitCharacterData>(data, "init_character_data")) {
+        InitCharacterId$.next(data.character.id);
+        InitCharacterData$.next(data);
+        return;
+    }
     if (tryPublish(data, ActionCompleteData$, "action_completed")) {
         processActionComplete(data);
         return;
     }
     tryPublish(data, ActionsUpdatedData$, "actions_updated") ||
-    tryPublish(data, InitCharacterData$, "init_character_data") ||
     tryPublish(data, InitClientSubject, "init_client_data") ||
     tryPublish(data, ItemUpdatedData$, "items_updated") ||
     tryPublish(data, LootLogData$, "loot_log_updated") ||
@@ -69,8 +74,13 @@ function processResponse(data: any) {
 }
 
 
-function tryPublish<T extends { type: string }>(data: any, source: Subject<T>, type: T["type"]): boolean {
-    if (data.type !== type) {
+function checkType<T extends { type: string }>(data: any, type: T["type"]): data is T {
+    return data.type === type
+}
+
+
+function tryPublish<T extends { type: string }>(data: any, source: Subject<T>, type: T["type"]): data is T {
+    if (!checkType(data, type)) {
         return false;
     }
     source.next(data);
