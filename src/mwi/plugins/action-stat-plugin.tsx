@@ -1,4 +1,5 @@
 import * as React from "react";
+import {getStringValue} from "../../shared/kv";
 import {uniqueStrings} from "../../shared/list";
 import {useLatestValue} from "../../shared/rxjs-react";
 import {Expandable} from "../component/expandable";
@@ -46,7 +47,7 @@ export function actionStatPlugin() {
 }
 
 function migration() {
-    let legacy: ActionCompleteEventData[] = JSON.parse(GM_getValue("character-store.action-stat.events", "[]"))
+    let legacy: ActionCompleteEventData[] = JSON.parse(getStringValue("character-store.action-stat.events", "[]"))
     if (legacy) {
         GM_deleteValue("character-store.action-stat.events");
         if (legacy.find(it => [it.added, it.removed].find(it => (it as any).itemHrid))) {

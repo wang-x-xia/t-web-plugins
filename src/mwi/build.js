@@ -39,6 +39,7 @@ const esmBundle = await rollup({
         resolvePlugin(),
         replace({
             'process.env.NODE_ENV': JSON.stringify(isProduction ? "production" : "development"),
+            '__platform__': JSON.stringify("tampermonkey"),
             preventAssignment: true,
         }),
         typescript(),

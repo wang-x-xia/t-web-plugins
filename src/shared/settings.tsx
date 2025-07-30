@@ -1,6 +1,7 @@
 import * as React from "react";
 import {useEffect, useState} from "react";
 import {Subject} from "rxjs";
+import {getStringValue, setStringValue} from "./kv";
 import {log, warn} from "./log";
 
 
@@ -25,6 +26,8 @@ export interface Setting<T> {
         type: "bool",
     } | {
         type: "internal",
+    } | {
+        type: "string",
     }
 
 }
@@ -82,6 +85,18 @@ export function createBoolSetting(id: string, name: string, defaultValue: boolea
     };
 }
 
+
+export function createStringSetting(
+    {id, name, defaultValue}: { id: string, name: string, defaultValue: string, },
+): Setting<string> {
+    return {
+        id, name, defaultValue,
+        value: {
+            type: "string",
+        },
+    };
+}
+
 export function createInternalSetting<T>(id: string, name: string, defaultValue: T): Setting<T> {
     return {
         id, name, defaultValue,
@@ -99,7 +114,7 @@ interface SettingStoredValue<T> {
 
 export function updateSetting<T>(setting: Setting<T>, value: T) {
     log("update-setting", {setting, value});
-    GM_setValue(setting.id, JSON.stringify(createValue(setting, value)));
+    setStringValue(setting.id, JSON.stringify(createValue(setting, value)));
     SettingUpdate.next({setting, value});
 }
 
@@ -124,7 +139,7 @@ export function getSetting<T>(setting: Setting<T>): T {
 }
 
 function getValue<T>(setting: Setting<T>): SettingStoredValue<T> | null {
-    const raw = GM_getValue(setting.id, null);
+    const raw = getStringValue(setting.id, null);
     if (raw === null) {
         return null;
     }
