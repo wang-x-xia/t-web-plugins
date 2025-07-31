@@ -11,7 +11,7 @@ import {getActionName} from "../engine/action";
 import {ActionCompleteEvent, type ActionCompleteEventData, AllLoadedEvent} from "../engine/engine-event";
 import {SpecialItems} from "../engine/item";
 import {defineStore, storeSubject} from "../engine/store";
-import {AddView} from "../view";
+import {AddView} from "../../shared/view";
 
 
 const ActionStatStore = defineStore<ActionCompleteEventData[]>({

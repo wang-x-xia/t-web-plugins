@@ -13,7 +13,7 @@ import {InventoryData$} from "../engine/inventory";
 import {getItemCategory, ItemCategory, SpecialItems} from "../engine/item";
 import {getSellPriceByHrid, type MarketData, MarketData$} from "../engine/market";
 import {defineStore, storeSubject} from "../engine/store";
-import {AddView} from "../view";
+import {AddView} from "../../shared/view";
 
 
 const MarketHistoryStore = defineStore<MarketData[]>({

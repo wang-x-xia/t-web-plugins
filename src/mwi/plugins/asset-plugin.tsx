@@ -12,7 +12,7 @@ import {InventoryData$} from "../engine/inventory";
 import {getItemCategory, ItemCategory, SpecialItems} from "../engine/item";
 import {getSellPriceByHrid, MarketData$} from "../engine/market";
 import {defineStore} from "../engine/store";
-import {AddView} from "../view";
+import {AddView} from "../../shared/view";
 
 
 interface AssetData {

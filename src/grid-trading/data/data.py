@@ -38,13 +38,7 @@ if __name__ == '__main__':
     if proxy:
         print("Using proxy", proxy)
         set_config(proxy=proxy)
-    save_daily_kline("0011.HK")
-    save_daily_kline("0386.HK")
-    save_daily_kline("0598.HK")
-    save_daily_kline("0857.HK")
-    save_daily_kline("0883.HK")
-    save_daily_kline("1398.HK")
-    save_daily_kline("1448.HK")
-    save_daily_kline("1810.HK")
-    save_daily_kline("1919.HK")
-    save_daily_kline("3988.HK")
+    with open("stock-list.json", "r") as f:
+        codes = json.load(f)
+    for code in codes:
+        save_daily_kline(code)

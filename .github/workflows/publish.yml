@@ -38,6 +38,7 @@ jobs:
           COMMIT_PART=$(git rev-parse --short HEAD)
           echo "VERSION_COMMIT=${DATE_PART}_${COMMIT_PART}" >> $GITHUB_ENV
       - run: npm run mwi
+      - run: npm run grid-trading
       - uses: actions/upload-pages-artifact@v3
         with:
           # Upload entire repository

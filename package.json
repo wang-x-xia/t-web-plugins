@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "mwi": "node src/mwi/build.js --production",
-    "mwi-dev": "node src/mwi/build.js"
+    "mwi-dev": "node src/mwi/build.js",
+    "grid-trading": "rollup -c src/grid-trading/rollup.config.js --production",
+    "grid-trading-dev": "rollup -c src/grid-trading/rollup.config.js -w"
   },
   "repository": {
     "type": "git",
@@ -19,6 +21,9 @@
   "homepage": "https://github.com/wang-x-xia/t-web-plugins#readme",
   "devDependencies": {
     "@rollup/plugin-commonjs": "^28.0.3",
+    "@rollup/plugin-dynamic-import-vars": "^2.1.5",
+    "@rollup/plugin-html": "^2.0.0",
+    "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@rollup/plugin-replace": "^6.0.2",
     "@rollup/plugin-typescript": "^12.1.2",

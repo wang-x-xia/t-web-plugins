@@ -12,7 +12,7 @@ import {ShowPercent} from "../component/number";
 import viewStyles from "../component/view.module.css";
 import {CollectActionType, ManufacturingActionType} from "../engine/action";
 import {AllLoadedEvent} from "../engine/engine-event";
-import {AddView} from "../view";
+import {AddView} from "../../shared/view";
 
 export function foragingPlugin() {
     AllLoadedEvent.subscribe({
