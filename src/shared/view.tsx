@@ -1,16 +1,22 @@
 import * as React from "react";
-import {useEffect, useMemo, useRef, useState} from "react";
+import {useMemo, useRef, useState} from "react";
 import {createRoot} from "react-dom/client";
 import {Rnd} from "react-rnd";
-import viewStyles from "../mwi/component/view.module.css";
+import {BehaviorSubject} from "rxjs";
 import {log, warn} from "./log";
+import {useLatestOrDefault} from "./rxjs-react";
 import {createBoolSetting, createInternalSetting, getSetting, updateSetting, useSetting} from "./settings";
+import viewStyles from "./view.module.css";
 
-export function createApp({id = "app", body = document.body}: { id?: string, body?: HTMLElement }) {
+export function createApp({id = "app", name, body = document.body}: {
+    id?: string,
+    name?: string,
+    body?: HTMLElement,
+}) {
     const container = document.createElement("div")
     container.id = id;
     document.body.insertBefore(container, body.firstChild);
-    createRoot(container).render(<App></App>);
+    createRoot(container).render(<App name={name}></App>);
 }
 
 interface ChildView {
@@ -19,17 +25,15 @@ interface ChildView {
     node: React.ReactNode
 }
 
-const childrenBefore: ChildView[] = []
-let addView: ((child: ChildView) => void) | undefined = undefined
+const Views$ = new BehaviorSubject<ChildView[]>([]);
 
 export function AddView(child: ChildView) {
     log("add-view", {child});
-    if (addView) {
-        addView(child);
-    } else if (childrenBefore.find((c) => c.id === child.id)) {
+    const previous = Views$.getValue();
+    if (previous.find((c) => c.id === child.id)) {
         warn("duplicate-view", {view: child});
     } else {
-        childrenBefore.push(child);
+        Views$.next([...previous, child]);
     }
 }
 
@@ -37,26 +41,10 @@ const POSITION_SETTINGS = createInternalSetting(
     "view.position", "Position",
     {x: 0, y: 0, width: "400px", height: "400px"})
 
-function App() {
+function App({name}: { name?: string }) {
     const [show, setShow] = useState(true);
     const [editMode, setEditMode] = useState(false);
-    const [children, setChildren] = useState<ChildView[]>(childrenBefore);
     const position = useRef(getSetting(POSITION_SETTINGS));
-
-    useEffect(() => {
-        addView = (child) => {
-            setChildren(previous => {
-                if (previous.find((c) => c.id === child.id)) {
-                    warn("duplicate-view", {child});
-                    return previous;
-                }
-                return [...previous, child]
-            });
-        };
-        return () => {
-            addView = undefined;
-        }
-    }, [])
 
     if (!show) {
         // Add a button to the top left corner
@@ -71,7 +59,7 @@ function App() {
             onClick={() => {
                 setShow(true);
             }}>
-            MWI Helper
+            {name || "Click to show"}
         </button>
     }
 
@@ -92,7 +80,7 @@ function App() {
     >
         <div className={viewStyles.app}>
             <div className={viewStyles.header}>
-                <div>Milky Way Idle Helper</div>
+                {name === undefined ? <></> : <div>{name}</div>}
                 <div>
                     <button onClick={() => {
                         setEditMode(!editMode);
@@ -107,12 +95,16 @@ function App() {
                     </button>
                 </div>
             </div>
-            <div className={viewStyles.content}>
-                {children.map((child) =>
-                    <ViewChild key={child.id} {...child}/>)}
-            </div>
+            <Views/>
         </div>
     </Rnd>
+}
+
+function Views() {
+    const children = useLatestOrDefault(Views$, [])
+    return <div className={viewStyles.content}>
+        {children.map((child) => <ViewChild key={child.id} {...child}/>)}
+    </div>
 }
 
 function ViewChild({id, name, node}: ChildView) {

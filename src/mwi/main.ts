@@ -12,7 +12,7 @@ import {foragingPlugin} from "./plugins/profit-plugins";
 setupEngineHook();
 
 window.addEventListener("load", () => {
-    createApp({id: "mwi-app-container"});
+    createApp({id: "mwi-app-container", name: "Milky Way Idle Helper"});
 });
 
 setupMarketData().catch((e) => {

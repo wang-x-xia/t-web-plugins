@@ -9,7 +9,7 @@ import {
 import {ShowCollectOrManufacturingActions} from "../component/action";
 import {ShowBuffByNonCombatActionType} from "../component/buff";
 import {ShowPercent} from "../component/number";
-import viewStyles from "../component/view.module.css";
+import viewStyles from "../../shared/view.module.css";
 import {CollectActionType, ManufacturingActionType} from "../engine/action";
 import {AllLoadedEvent} from "../engine/engine-event";
 import {AddView} from "../../shared/view";

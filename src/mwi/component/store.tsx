@@ -6,7 +6,7 @@ import {ShowSettingValue} from "../../shared/settings";
 import {exportStore, getStoreSize, resetStoreData, type StoreDefinition, StoreSizeChange$} from "../engine/store";
 import {ShowSize} from "./number";
 
-import viewStyles from "./view.module.css";
+import viewStyles from "../../shared/view.module.css";
 
 export function ShowStoreActions<T>({store}: { store: StoreDefinition<T> }) {
     const {id, name} = store;
