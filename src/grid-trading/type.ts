@@ -6,13 +6,10 @@ export interface DailyData {
     close: number;
 }
 
-export interface GridTradingData {
-    basic: number;
-    cell: number;
-}
-
-export interface GridTradingResult {
-    basic: number;
-    profit: number;
-    maxCost: number;
+export interface StockData {
+    daily: DailyData[];
+    meta: {
+        name?: string;
+        currency?: string;
+    }
 }

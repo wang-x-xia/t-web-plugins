@@ -4,6 +4,7 @@ import {ShowDate} from "../../mwi/component/date";
 import {createStringSelectSetting, ShowSettingValue, useSetting} from "../../shared/settings";
 import {AddView} from "../../shared/view";
 import stockList from "../data/stock-list.json"
+import type {StockData} from "../type";
 
 export function listStockPlugin() {
     AddView({id: "list-stock", name: "List Stock", node: <ListStock/>})
@@ -28,7 +29,7 @@ function ListStock() {
 }
 
 function ShowStockBasic({code}: { code: string }) {
-    const [data, setData] = useState<any>(null);
+    const [data, setData] = useState<StockData | null>(null);
     useEffect(() => {
         import((`../data/${code}.json`)).then(setData);
     }, [])
@@ -46,11 +47,11 @@ function ShowStockBasic({code}: { code: string }) {
             </tr>
             <tr>
                 <th>Name</th>
-                <td>{data.meta?.name}</td>
+                <td>{data.meta.name}</td>
             </tr>
             <tr>
                 <th>Currency</th>
-                <td>{data.meta?.currency}</td>
+                <td>{data.meta.currency}</td>
             </tr>
             <tr>
                 <th>Daily Data</th>
