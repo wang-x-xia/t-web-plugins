@@ -2,14 +2,14 @@ import * as React from "react";
 import {useEffect, useMemo, useRef, useState} from "react";
 import {createRoot} from "react-dom/client";
 import {Rnd} from "react-rnd";
-import {log, warn} from "../shared/log";
-import {createBoolSetting, createInternalSetting, getSetting, updateSetting, useSetting} from "../shared/settings";
-import viewStyles from "./component/view.module.css";
+import viewStyles from "../mwi/component/view.module.css";
+import {log, warn} from "./log";
+import {createBoolSetting, createInternalSetting, getSetting, updateSetting, useSetting} from "./settings";
 
-export function setupApp() {
+export function createApp({id = "app", body = document.body}: { id?: string, body?: HTMLElement }) {
     const container = document.createElement("div")
-    container.id = "mwi-app-container";
-    document.body.insertBefore(container, document.body.firstChild);
+    container.id = id;
+    document.body.insertBefore(container, body.firstChild);
     createRoot(container).render(<App></App>);
 }
 

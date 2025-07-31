@@ -1,4 +1,5 @@
 import {BehaviorSubject, Subject} from "rxjs";
+import {getStringValue, setStringValue} from "../../shared/kv";
 import {info, log} from "../../shared/log";
 import {createBoolSetting, getSetting, type Setting} from "../../shared/settings";
 import {InitCharacterId$} from "./engine-event";
@@ -66,11 +67,11 @@ export function getStoreKey(store: StoreDefinition<any>) {
 
 export function getStoreData<T>(store: StoreDefinition<T>): StoredValue<T> {
     const {defaultValue} = store
-    const data = GM_getValue(getStoreKey(store), null);
+    const data = getStringValue(getStoreKey(store), null);
     if (data === null) {
         if (store.characterBased) {
             // Migrate
-            const legacy = GM_getValue(`store.${store.id}`, null)
+            const legacy = getStringValue(`store.${store.id}`, null)
             if (legacy) {
                 info("migrate-store", {store});
                 GM_deleteValue(`store.${store.id}`);
@@ -100,7 +101,7 @@ export function updateStoreData<T>(store: StoreDefinition<T>, data: T) {
     const storedData: StoredValue<T> = {updated: Date.now(), data};
     log("update-store-data", {store, storedData});
     const json = JSON.stringify(storedData);
-    GM_setValue(getStoreKey(store), json);
+    setStringValue(getStoreKey(store), json);
     StoreSizeChange$.next({store, size: json.length});
 }
 
@@ -108,7 +109,7 @@ export function resetStoreData<T>(store: StoreDefinition<T>) {
     const {defaultValue} = store;
     const storedData: StoredValue<T> = {updated: Date.now(), data: defaultValue};
     log("reset-store-data", {store, storedData});
-    GM_setValue(getStoreKey(store), JSON.stringify(storedData));
+    setStringValue(getStoreKey(store), JSON.stringify(storedData));
     StoreSizeChange$.next({store, size: 0});
 }
 

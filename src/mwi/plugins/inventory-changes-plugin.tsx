@@ -9,7 +9,7 @@ import {getActionName} from "../engine/action";
 import {AllLoadedEvent} from "../engine/engine-event";
 import {InventoryItemChanges$, type ItemChangesData, mergeItemChangesData} from "../engine/inventory";
 import {defineStore, storeSubject} from "../engine/store";
-import {AddView} from "../view";
+import {AddView} from "../../shared/view";
 
 
 export function inventoryChangesPlugin() {

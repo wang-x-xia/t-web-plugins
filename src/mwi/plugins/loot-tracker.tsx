@@ -8,7 +8,7 @@ import {ShowNumber} from "../component/number";
 import {getActionInputs, getActionName} from "../engine/action";
 import {LootLogSubject} from "../engine/engine-event";
 import {resolveItemHrid} from "../engine/hrid";
-import {AddView} from "../view";
+import {AddView} from "../../shared/view";
 
 export function lootTrackerPlugin() {
     const subscription = LootLogSubject.subscribe(({lootLog}) => {

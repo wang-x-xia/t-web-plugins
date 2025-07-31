@@ -1,4 +1,5 @@
 import * as React from "react";
+import {getStringValue} from "../../shared/kv";
 import {uniqueStrings} from "../../shared/list";
 import {useLatestValue} from "../../shared/rxjs-react";
 import {Expandable} from "../component/expandable";
@@ -10,7 +11,7 @@ import {getActionName} from "../engine/action";
 import {ActionCompleteEvent, type ActionCompleteEventData, AllLoadedEvent} from "../engine/engine-event";
 import {SpecialItems} from "../engine/item";
 import {defineStore, storeSubject} from "../engine/store";
-import {AddView} from "../view";
+import {AddView} from "../../shared/view";
 
 
 const ActionStatStore = defineStore<ActionCompleteEventData[]>({
@@ -46,7 +47,7 @@ export function actionStatPlugin() {
 }
 
 function migration() {
-    let legacy: ActionCompleteEventData[] = JSON.parse(GM_getValue("character-store.action-stat.events", "[]"))
+    let legacy: ActionCompleteEventData[] = JSON.parse(getStringValue("character-store.action-stat.events", "[]"))
     if (legacy) {
         GM_deleteValue("character-store.action-stat.events");
         if (legacy.find(it => [it.added, it.removed].find(it => (it as any).itemHrid))) {

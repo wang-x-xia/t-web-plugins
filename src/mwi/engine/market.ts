@@ -1,3 +1,4 @@
+import {setStringValue} from "../../shared/kv";
 import {log} from "../../shared/log";
 import {MarketLoaded$} from "./engine-event";
 import {getOpenableItem, isItemOpenable, SpecialItems} from "./item";
@@ -77,7 +78,7 @@ export async function setupMarketData() {
         }
     }
     marketData = (await (await fetch(MarketSource)).json()) as MarketData;
-    GM_setValue("marketdata", JSON.stringify(marketData));
+    setStringValue("marketdata", JSON.stringify(marketData));
     log("loaded-market-data", {"data": marketData});
     MarketData$.next(marketData);
     MarketLoaded$.complete();
