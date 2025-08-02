@@ -3,7 +3,7 @@ import {type ReactNode, useMemo} from "react";
 import {combineLatest, map, of} from "rxjs";
 import {useLatestOrDefault} from "../../shared/rxjs-react";
 import {type AnyActionType, CombatActionType, EnhancingActionType} from "../engine/action";
-import {BuffData$, createEmptyBuffData, getBuffTypeName, produceLevelData} from "../engine/buff";
+import {BuffDataStore, createEmptyBuffData, getBuffTypeName, produceLevelData} from "../engine/buff";
 import {
     type AnyBuffType,
     type BuffData,
@@ -19,7 +19,7 @@ import {ShowPercent} from "./number";
 
 
 export function useBuffData(actionType: Exclude<AnyActionType, CombatActionType>, levelRequirement: number): BuffData {
-    const buffData$ = useMemo(() => combineLatest({buff: BuffData$, character: InitCharacterData$}).pipe(
+    const buffData$ = useMemo(() => combineLatest({buff: BuffDataStore.data$, character: InitCharacterData$}).pipe(
         map(({buff, character}) => {
             const level = character.characterSkills.find(it => it.skillHrid === getSkillHrid(actionType))?.level ?? 0;
             return produceLevelData(buff[actionType], levelRequirement, level);
@@ -36,7 +36,7 @@ export function ShowBuffByNonCombatActionType({actionType, data: inputData}: {
         if (inputData !== undefined) {
             return of(inputData);
         } else {
-            return BuffData$.pipe(map(it => it[actionType]));
+            return BuffDataStore.data$.pipe(map(it => it[actionType]));
         }
     }, [inputData, actionType]);
     const data = useLatestOrDefault(data$, createEmptyBuffData());

@@ -1,6 +1,7 @@
 import * as React from "react";
 import {useLatestOrDefault} from "../../shared/rxjs-react";
 import {jsonCopy} from "../../shared/utils";
+import {AddView} from "../../shared/view";
 import {ShowTimestamp} from "../component/date";
 import {BuyItemTable, SellItemTable} from "../component/item-table";
 import {ShowStoreActions} from "../component/store";
@@ -8,8 +9,7 @@ import {getActionName} from "../engine/action";
 
 import {AllLoadedEvent} from "../engine/engine-event";
 import {InventoryItemChanges$, type ItemChangesData, mergeItemChangesData} from "../engine/inventory";
-import {defineStore, storeSubject} from "../engine/store";
-import {AddView} from "../../shared/view";
+import {defineStore} from "../engine/store";
 
 
 export function inventoryChangesPlugin() {
@@ -45,10 +45,9 @@ const ItemChangesStore = defineStore<HourChangesData[]>({
     defaultValue: [],
 })
 
-const InventoryChangesData$ = storeSubject(ItemChangesStore);
 InventoryItemChanges$.subscribe(({added, removed, cause, time}) => {
     const hour = Math.floor(time / 1000 / 60 / 60) * 1000 * 60 * 60;
-    let result = jsonCopy(InventoryChangesData$.getValue());
+    let result = jsonCopy(ItemChangesStore.data$.getValue());
     let entry = result.find(it => it.time === hour);
     if (!entry) {
         entry = {
@@ -77,11 +76,11 @@ InventoryItemChanges$.subscribe(({added, removed, cause, time}) => {
     }
     // Reverse order
     result.sort((a, b) => b.time - a.time);
-    InventoryChangesData$.next(result);
+    ItemChangesStore.update(result);
 });
 
 function ShowInventoryChanges() {
-    const changes = useLatestOrDefault(InventoryChangesData$, []);
+    const changes = useLatestOrDefault(ItemChangesStore.data$, []);
 
     return <table>
         <thead>
@@ -95,7 +94,7 @@ function ShowInventoryChanges() {
         {changes.map((it) => <tr key={it.time}>
             <td>
                 <ShowTimestamp value={it.time}/>
-                <button onClick={() => InventoryChangesData$.next(changes.filter(({time}) => time !== it.time))}>
+                <button onClick={() => ItemChangesStore.update(prev => prev.filter(({time}) => time !== it.time))}>
                     x
                 </button>
             </td>

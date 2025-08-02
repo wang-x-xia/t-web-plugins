@@ -3,6 +3,7 @@ import {Fragment} from "react";
 import {sum} from "../../shared/list";
 import {useLatestOrDefault, useLatestValue} from "../../shared/rxjs-react";
 import {createBoolSetting, updateSetting, useSetting} from "../../shared/settings";
+import {AddView} from "../../shared/view";
 import {ShowTimestamp} from "../component/date";
 import {ShowItem} from "../component/item";
 import {ShowNumber} from "../component/number";
@@ -11,9 +12,8 @@ import {ShowStoreActions} from "../component/store";
 import {AllLoadedEvent} from "../engine/engine-event";
 import {InventoryData$} from "../engine/inventory";
 import {getItemCategory, ItemCategory, SpecialItems} from "../engine/item";
-import {getSellPriceByHrid, type MarketData, MarketData$} from "../engine/market";
-import {defineStore, storeSubject} from "../engine/store";
-import {AddView} from "../../shared/view";
+import {getSellPriceByHrid, type MarketData, MarketDataStore} from "../engine/market";
+import {defineStore} from "../engine/store";
 
 
 const MarketHistoryStore = defineStore<MarketData[]>({
@@ -24,16 +24,15 @@ const MarketHistoryStore = defineStore<MarketData[]>({
     defaultValue: [],
 })
 
-export const MarketHistoryData$ = storeSubject(MarketHistoryStore);
-
-MarketData$.subscribe(data => {
-    const previous = MarketHistoryData$.getValue();
-    if (previous.find(it => it.timestamp === data.timestamp)) {
-        return;
-    }
-    const result = [...previous, data]
-    result.sort((a, b) => b.timestamp - a.timestamp);
-    MarketHistoryData$.next(result)
+MarketDataStore.data$.subscribe(data => {
+    MarketHistoryStore.update(previous => {
+        if (previous.find(it => it.timestamp === data.timestamp)) {
+            return previous;
+        }
+        const result = [...previous, data]
+        result.sort((a, b) => b.timestamp - a.timestamp);
+        return result;
+    });
 });
 
 export function priceChangePlugin() {
@@ -57,7 +56,7 @@ const SHOW_OTHERS_SETTING = createBoolSetting(
     false)
 
 export function ShowPriceChange() {
-    const history = useLatestOrDefault(MarketHistoryData$, []);
+    const history = useLatestOrDefault(MarketHistoryStore.data$, []);
     const inventory = useLatestValue(InventoryData$)
     const showOthers = useSetting(SHOW_OTHERS_SETTING);
 
@@ -111,7 +110,7 @@ export function ShowPriceChange() {
                     <th key={timestamp} colSpan={2}>
                         <ShowTimestamp value={timestamp * 1000}/>
                         <button
-                            onClick={() => MarketHistoryData$.next(history.filter(it => it.timestamp !== timestamp))}>
+                            onClick={() => MarketHistoryStore.update(prev => prev.filter(it => it.timestamp !== timestamp))}>
                             x
                         </button>
                     </th>)}

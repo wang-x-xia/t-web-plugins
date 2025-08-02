@@ -3,12 +3,13 @@ import {useMemo} from "react";
 import {filter, map} from "rxjs";
 import {useLatestOrDefault} from "../../shared/rxjs-react";
 import {ShowSettingValue} from "../../shared/settings";
-import {exportStore, getStoreSize, resetStoreData, type StoreDefinition, StoreSizeChange$} from "../engine/store";
-import {ShowSize} from "./number";
+import {exportStore, getStoreSize, StoreSizeChange$} from "../../shared/store";
 
 import viewStyles from "../../shared/view.module.css";
+import type {Store} from "../engine/store";
+import {ShowSize} from "./number";
 
-export function ShowStoreActions<T>({store}: { store: StoreDefinition<T> }) {
+export function ShowStoreActions<T>({store}: { store: Store<T> }) {
     const {id, name} = store;
     const size$ = useMemo(() => StoreSizeChange$.pipe(
             filter(it => it.store.id === id),
@@ -26,7 +27,7 @@ export function ShowStoreActions<T>({store}: { store: StoreDefinition<T> }) {
             <ShowSettingValue setting={store.enableSetting}/>
         </span> : <></>}
         <span>Used space: <ShowSize value={size}/></span>
-        <button onClick={() => resetStoreData(store)}>Clear</button>
+        <button onClick={() => store.reset()}>Clear</button>
         <button onClick={() => exportStore(store)}>Save as</button>
     </div>
 }

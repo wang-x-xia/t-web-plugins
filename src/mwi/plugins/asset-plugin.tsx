@@ -4,15 +4,15 @@ import {combineLatest} from "rxjs";
 import {sum} from "../../shared/list";
 import {useLatestOrDefault} from "../../shared/rxjs-react";
 import {jsonCopy} from "../../shared/utils";
+import {AddView} from "../../shared/view";
 import {formatTimestamp} from "../component/date";
 import {formatNumber} from "../component/number";
 import {ShowStoreActions} from "../component/store";
 import {AllLoadedEvent} from "../engine/engine-event";
 import {InventoryData$} from "../engine/inventory";
 import {getItemCategory, ItemCategory, SpecialItems} from "../engine/item";
-import {getSellPriceByHrid, MarketData$} from "../engine/market";
+import {getSellPriceByHrid, MarketDataStore} from "../engine/market";
 import {defineStore} from "../engine/store";
-import {AddView} from "../../shared/view";
 
 
 interface AssetData {
@@ -50,7 +50,7 @@ const AssertStore = defineStore<AssetData[]>({
     defaultValue: [],
 })
 
-combineLatest({inventory: InventoryData$, market: MarketData$}).subscribe(({inventory, market}) => {
+combineLatest({inventory: InventoryData$, market: MarketDataStore.data$}).subscribe(({inventory, market}) => {
     if (inventory === null) {
         return;
     }
@@ -107,13 +107,15 @@ combineLatest({inventory: InventoryData$, market: MarketData$}).subscribe(({inve
         return result
     }
 
-    const result = [
-        ...AssertStore.data$.getValue().filter(it => it.inventoryTime !== inventoryTime)
-            .map(it => checkAndApplyNearMarket(it)),
-        assetData,
-    ];
-    result.sort((a, b) => b.inventoryTime - a.inventoryTime);
-    AssertStore.data$.next(result);
+    AssertStore.update((prev) => {
+        const result = [
+            ...prev.filter(it => it.inventoryTime !== inventoryTime)
+                .map(it => checkAndApplyNearMarket(it)),
+            assetData,
+        ];
+        result.sort((a, b) => b.inventoryTime - a.inventoryTime);
+        return result
+    });
 });
 
 export function assetPlugin() {

@@ -33,7 +33,7 @@ export interface Setting<T> {
 }
 
 
-const SettingUpdate = new Subject<{ setting: Setting<any>, value: any }>()
+export const SettingUpdate$ = new Subject<{ setting: Setting<any>, value: any }>()
 
 export function createSelectSetting<T>(
     id: string, name: string, defaultValue: T,
@@ -115,7 +115,7 @@ interface SettingStoredValue<T> {
 export function updateSetting<T>(setting: Setting<T>, value: T) {
     log("update-setting", {setting, value});
     setStringValue(setting.id, JSON.stringify(createValue(setting, value)));
-    SettingUpdate.next({setting, value});
+    SettingUpdate$.next({setting, value});
 }
 
 function createValue<T>(setting: Setting<T>, value: T): SettingStoredValue<T> {
@@ -184,7 +184,7 @@ export function checkSetting<T>(setting: Setting<T>, value: any): value is T {
 export function useSetting<T>(setting: Setting<T>): T {
     const [value, setValue] = useState(getSetting(setting));
     useEffect(() => {
-        const subscription = SettingUpdate.subscribe({
+        const subscription = SettingUpdate$.subscribe({
             next: ({setting: updatedSetting, value}) => {
                 if (setting.id === updatedSetting.id) {
                     setValue(value);

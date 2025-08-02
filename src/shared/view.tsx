@@ -1,5 +1,5 @@
 import * as React from "react";
-import {useMemo, useRef, useState} from "react";
+import {type ErrorInfo, type ReactNode, useMemo, useRef, useState} from "react";
 import {createRoot} from "react-dom/client";
 import {Rnd} from "react-rnd";
 import {BehaviorSubject} from "rxjs";
@@ -125,8 +125,34 @@ function ViewChild({id, name, node}: ChildView) {
             <button onClick={() => updateSetting(setting, false)}>-</button>
         </div>
         <div className={viewStyles["child-content"]}>
-            {node}
+            <ViewSandbox>
+                {node}
+            </ViewSandbox>
         </div>
     </div>
 
+}
+
+class ViewSandbox extends React.Component<{ children: ReactNode }, { hasError: boolean }> {
+    constructor(props: { children: ReactNode; }) {
+        super(props);
+        this.state = {hasError: false};
+    }
+
+    static getDerivedStateFromError(error: Error) {
+        return {hasError: true};
+    }
+
+    componentDidCatch(error: Error, info: ErrorInfo) {
+        warn("error-boundary", {error, info, ownerStack: React.captureOwnerStack(),});
+    }
+
+    render() {
+        if (this.state.hasError) {
+            // You can render any custom fallback UI
+            return <>Error</>;
+        }
+
+        return this.props.children;
+    }
 }

@@ -1,5 +1,5 @@
 import {InitCharacterSubject} from "./engine-event";
-import {defineStore, storeSubject} from "./store";
+import {defineStore} from "./store";
 
 export enum EquipmentTool {
     AlchemyTool = "/item_locations/alchemy_tool",
@@ -43,7 +43,7 @@ export function getEquipmentLocationByHrid(hrid: string): EquipmentLocation | Eq
         Object.values(EquipmentTool).find((tool) => tool === hrid) || null;
 }
 
-const EquipmentStore = defineStore<Record<EquipmentLocation | EquipmentTool, EquipmentItem>>({
+export const EquipmentStore = defineStore<Record<EquipmentLocation | EquipmentTool, EquipmentItem>>({
     id: "equipment",
     name: "Equipment",
     characterBased: true,
@@ -51,7 +51,6 @@ const EquipmentStore = defineStore<Record<EquipmentLocation | EquipmentTool, Equ
     defaultValue: {} as Record<EquipmentLocation | EquipmentTool, EquipmentItem>,
 })
 
-export const Equipments$ = storeSubject(EquipmentStore);
 InitCharacterSubject.subscribe((data) => {
     const localEquipment = {} as Record<EquipmentLocation | EquipmentTool, EquipmentItem>;
     Object.values(data.characterItems).forEach((item) => {
@@ -65,5 +64,5 @@ InitCharacterSubject.subscribe((data) => {
             enhancementLevel: item.enhancementLevel,
         };
     });
-    Equipments$.next(localEquipment);
+    EquipmentStore.update(localEquipment);
 });

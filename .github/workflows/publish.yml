@@ -33,6 +33,7 @@ jobs:
         with:
           node-version: 18
       - run: npm install
+      - run: npm test
       - run: |
           DATE_PART=$(date "+%Y-%m-%d")
           COMMIT_PART=$(git rev-parse --short HEAD)

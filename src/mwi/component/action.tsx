@@ -2,7 +2,7 @@ import * as React from "react";
 import {useMemo} from "react";
 import {useLatestValue} from "../../shared/rxjs-react";
 import {CollectActionType, ManufacturingActionType} from "../engine/action";
-import {BuffData$, produceLevelData} from "../engine/buff";
+import {BuffDataStore, produceLevelData} from "../engine/buff";
 import {getClientData} from "../engine/client";
 import {InitCharacterData$} from "../engine/engine-event";
 import {
@@ -26,7 +26,7 @@ export function ShowCollectOrManufacturingActions({actionType, hours, mode, luck
     mode: "avg" | "lucky",
     lucky: number,
 }) {
-    const buffData = useLatestValue(BuffData$);
+    const buffData = useLatestValue(BuffDataStore.data$);
     const characterData = useLatestValue(InitCharacterData$);
     const actions = useMemo<(ProfitData & ProfitConfiguration) []>(() => {
         if (!buffData || !characterData) {

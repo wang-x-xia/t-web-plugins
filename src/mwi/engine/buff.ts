@@ -22,8 +22,8 @@ import {
 } from "./buff-type";
 import {getClientData} from "./client";
 import {InitCharacterData$} from "./engine-event";
-import {Equipments$} from "./equipment";
-import {defineStore, type StoreDataOfSubject, storeSubject} from "./store";
+import {EquipmentStore} from "./equipment";
+import {defineStore, type StoreDataOfSubject} from "./store";
 
 export function getBuffTypeName(action: AnyBuffType) {
     return getClientData().buffTypeDetailMap[action].name
@@ -140,7 +140,7 @@ export function createEmptyBuffData(): BuffData {
     }
 }
 
-const BuffDataStore = defineStore<Record<Exclude<AnyActionType, CombatActionType>, BuffData>>({
+export const BuffDataStore = defineStore<Record<Exclude<AnyActionType, CombatActionType>, BuffData>>({
     id: "buff-data",
     name: "Buff Data",
     characterBased: true,
@@ -159,9 +159,6 @@ const BuffDataStore = defineStore<Record<Exclude<AnyActionType, CombatActionType
     },
 })
 
-
-export const BuffData$ = storeSubject(BuffDataStore);
-
 export function produceLevelData(buffData: BuffData, levelRequirement: number, level: number) {
     return produce(buffData, (draft) => {
         const efficiency = draft[NormalBuffType.Efficiency];
@@ -178,9 +175,9 @@ export function produceLevelData(buffData: BuffData, levelRequirement: number, l
     })
 }
 
-combineLatest({characterData: InitCharacterData$, equipmentData: Equipments$}).subscribe(
+combineLatest({characterData: InitCharacterData$, equipmentData: EquipmentStore.data$}).subscribe(
     (({characterData, equipmentData}) => {
-        BuffData$.next(Object.fromEntries([CollectActionType, ManufacturingActionType, AlchemyActionType, EnhancingActionType]
+        BuffDataStore.update(Object.fromEntries([CollectActionType, ManufacturingActionType, AlchemyActionType, EnhancingActionType]
             .flatMap((typeEnum) => Object.values(typeEnum)
                 .map((actionType) => [actionType, createBuffData(actionType, characterData, equipmentData)]))
         ));
@@ -189,7 +186,7 @@ combineLatest({characterData: InitCharacterData$, equipmentData: Equipments$}).s
 
 export function createBuffData(actionType: AnyActionType,
                                characterData: InitCharacterData,
-                               equipmentData: StoreDataOfSubject<typeof Equipments$>): BuffData {
+                               equipmentData: StoreDataOfSubject<typeof EquipmentStore.data$>): BuffData {
     return {
         [NormalBuffType.ActionSpeed]: createBuffSourceData(actionType, NormalBuffType.ActionSpeed, characterData, equipmentData),
         [NormalBuffType.Efficiency]: createBuffSourceData(actionType, NormalBuffType.Efficiency, characterData, equipmentData),
@@ -203,7 +200,7 @@ export function createBuffData(actionType: AnyActionType,
 
 function createBuffSourceData(actionType: AnyActionType, buffType: AnyBuffType,
                               characterData: InitCharacterData,
-                              equipmentData: StoreDataOfSubject<typeof Equipments$>): BuffTypeData {
+                              equipmentData: StoreDataOfSubject<typeof EquipmentStore.data$>): BuffTypeData {
     const equipment = createEquipmentBuffSourceData(actionType, buffType, equipmentData);
     const mooPass = createNormalBuffSourceData(actionType, buffType, characterData, "mooPassActionTypeBuffsMap");
     const community = createNormalBuffSourceData(actionType, buffType, characterData, "communityActionTypeBuffsMap");
@@ -228,7 +225,7 @@ function createBuffSourceData(actionType: AnyActionType, buffType: AnyBuffType,
 
 function createEquipmentBuffSourceData(
     actionType: AnyActionType, buffType: AnyBuffType,
-    equipmentData: StoreDataOfSubject<typeof Equipments$>): BuffTypeData[BuffSource.Equipment] {
+    equipmentData: StoreDataOfSubject<typeof EquipmentStore.data$>): BuffTypeData[BuffSource.Equipment] {
     const equipments = Object.values(equipmentData)
         .map(equipment => ({
             equipment,

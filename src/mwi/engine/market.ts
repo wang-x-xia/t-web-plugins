@@ -2,7 +2,7 @@ import {setStringValue} from "../../shared/kv";
 import {log} from "../../shared/log";
 import {MarketLoaded$} from "./engine-event";
 import {getOpenableItem, isItemOpenable, SpecialItems} from "./item";
-import {defineStore, storeSubject} from "./store";
+import {defineStore} from "./store";
 
 const MarketSource = "game_data/marketplace.json"
 
@@ -16,7 +16,7 @@ export interface MarketData {
 }
 
 export function getMarketData() {
-    return MarketData$.getValue();
+    return MarketDataStore.data$.getValue();
 }
 
 export function getSellPriceByHrid(hrid: string, enhancementLevel: number = 0, marketData: MarketData | undefined = undefined): number {
@@ -40,7 +40,7 @@ function getPriceByHrid(hrid: string, field: "a" | "b", enhancementLevel: number
         return getPriceByHrid(SpecialItems.BagOf10CowBells, field, enhancementLevel, marketData) / 10;
     }
     if (marketData.marketData[hrid] === undefined) {
-        if (isItemOpenable(hrid)) {
+        if (isItemOpenable(hrid) && ![SpecialItems.BagOf10CowBells as string].includes(hrid)) {
             const openableItem = getOpenableItem(hrid)!;
             const otherSellAmount = Object.entries(openableItem.drops).reduce((acc, [dropHrid, dropCount]) => acc +
                 getPriceByHrid(dropHrid, field, 0, marketData) * dropCount, 0);
@@ -52,7 +52,7 @@ function getPriceByHrid(hrid: string, field: "a" | "b", enhancementLevel: number
     return marketData.marketData[hrid][enhancementLevel.toString()]?.[field] ?? -1;
 }
 
-const MarketDataStore = defineStore<MarketData>({
+export const MarketDataStore = defineStore<MarketData>({
     id: "market",
     name: "Market",
     characterBased: false,
@@ -63,13 +63,11 @@ const MarketDataStore = defineStore<MarketData>({
     },
 })
 
-export const MarketData$ = storeSubject(MarketDataStore);
-
 export async function setupMarketData() {
-    let marketData = MarketData$.getValue();
+    let marketData = MarketDataStore.data$.getValue();
     if (marketData.timestamp !== 0) {
         MarketLoaded$.complete();
-        if (Date.now() / 1000 - MarketData$.getValue().timestamp <= 6 * 60 * 60) {
+        if (Date.now() / 1000 - marketData.timestamp <= 6 * 60 * 60) {
             // Use cached data
             log("use-cached-market-data", {"data": marketData});
             return;
@@ -80,6 +78,6 @@ export async function setupMarketData() {
     marketData = (await (await fetch(MarketSource)).json()) as MarketData;
     setStringValue("marketdata", JSON.stringify(marketData));
     log("loaded-market-data", {"data": marketData});
-    MarketData$.next(marketData);
+    MarketDataStore.update(marketData);
     MarketLoaded$.complete();
 }

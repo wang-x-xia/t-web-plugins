@@ -2,6 +2,7 @@ import * as React from "react";
 import {getStringValue} from "../../shared/kv";
 import {uniqueStrings} from "../../shared/list";
 import {useLatestValue} from "../../shared/rxjs-react";
+import {AddView} from "../../shared/view";
 import {Expandable} from "../component/expandable";
 import {ShowItem} from "../component/item";
 import {ShowNumber, ShowPercent} from "../component/number";
@@ -10,8 +11,7 @@ import {getActionName} from "../engine/action";
 
 import {ActionCompleteEvent, type ActionCompleteEventData, AllLoadedEvent} from "../engine/engine-event";
 import {SpecialItems} from "../engine/item";
-import {defineStore, storeSubject} from "../engine/store";
-import {AddView} from "../../shared/view";
+import {defineStore} from "../engine/store";
 
 
 const ActionStatStore = defineStore<ActionCompleteEventData[]>({
@@ -22,7 +22,7 @@ const ActionStatStore = defineStore<ActionCompleteEventData[]>({
     defaultValue: [],
 })
 
-const ActionStat$ = storeSubject(ActionStatStore);
+const ActionStat$ = ActionStatStore.data$;
 ActionCompleteEvent.subscribe((event) => {
     if (event.count === 0) {
         return;
