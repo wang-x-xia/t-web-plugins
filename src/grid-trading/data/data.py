@@ -9,7 +9,7 @@ def proxy():
     return os.environ.get("STOCK_PROXY")
 
 
-def save_daily_kline(code: str):
+def save_daily_kline(code: str, name: str):
     today = date.today()
     start = today.replace(year=today.year - 1)
     t = Ticker(code)
@@ -28,9 +28,10 @@ def save_daily_kline(code: str):
     print("Load meta", code)
     meta = {
         "currency": t.info["currency"],
+        "name": name,
     }
-    with open(f"{code}.json", "w") as f:
-        json.dump({"daily": result, "meta": meta}, f, indent=2)
+    with open(f"{code}.json", "w", encoding="utf-8") as f:
+        json.dump({"daily": result, "meta": meta}, f, indent=2, ensure_ascii=False)
 
 
 if __name__ == '__main__':
@@ -38,7 +39,7 @@ if __name__ == '__main__':
     if proxy:
         print("Using proxy", proxy)
         set_config(proxy=proxy)
-    with open("stock-list.json", "r") as f:
-        codes = json.load(f)
-    for code in codes:
-        save_daily_kline(code)
+    with open("stock-list.json", "r", encoding="utf-8") as f:
+        stocks = json.load(f)
+    for stock in stocks:
+        save_daily_kline(stock["code"], stock["name"])
