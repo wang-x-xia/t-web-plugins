@@ -1,27 +1,21 @@
 import * as React from "react";
 import {useEffect, useState} from "react";
 import {ShowDate} from "../../mwi/component/date";
-import {createStringSelectSetting, ShowSettingValue, useSetting} from "../../shared/settings";
+import {ShowSettingValue, useSetting} from "../../shared/settings";
 import {AddView} from "../../shared/view";
-import stockList from "../data/stock-list.json"
+import {CurrentStockSetting} from "../common";
 import type {StockData} from "../type";
 
 export function listStockPlugin() {
     AddView({id: "list-stock", name: "List Stock", node: <ListStock/>})
 }
 
-const SelectedStockSetting = createStringSelectSetting({
-    id: "selected-stock",
-    name: "Selected Stock",
-    defaultValue: "",
-}, stockList.map((s) => ({name: s, value: s})))
-
 function ListStock() {
-    const code = useSetting(SelectedStockSetting)
+    const code = useSetting(CurrentStockSetting)
     return <>
         <div>
             <label>Selected Stock:</label>
-            <ShowSettingValue setting={SelectedStockSetting}/>
+            <ShowSettingValue setting={CurrentStockSetting}/>
         </div>
         {code === "" ? "Waiting..." :
             <ShowStockBasic code={code}/>}
