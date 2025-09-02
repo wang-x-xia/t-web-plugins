@@ -1,9 +1,14 @@
-import {createStringSelectSetting} from "../shared/settings";
-import stockList from "./data/stock-list.json";
+import {createStringSetting} from "../shared/settings";
 
 
-export const CurrentStockSetting = createStringSelectSetting({
+export const CurrentStockSetting = createStringSetting({
     id: "selected-stock",
     name: "Selected Stock",
     defaultValue: "",
-}, stockList.map(({code, name}) => ({name, value: code})))
+});
+
+export const ServerSetting = createStringSetting({
+    id: "server",
+    name: "Server",
+    defaultValue: "http://localhost:8000",
+});

@@ -1,10 +1,8 @@
 import * as React from "react";
-import {useEffect, useState} from "react";
-import {ShowDate} from "../../mwi/component/date";
 import {ShowSettingValue, useSetting} from "../../shared/settings";
 import {AddView} from "../../shared/view";
+import {useStockBasic} from "../api";
 import {CurrentStockSetting} from "../common";
-import type {StockData} from "../type";
 
 export function listStockPlugin() {
     AddView({id: "list-stock", name: "List Stock", node: <ListStock/>})
@@ -23,10 +21,7 @@ function ListStock() {
 }
 
 function ShowStockBasic({code}: { code: string }) {
-    const [data, setData] = useState<StockData | null>(null);
-    useEffect(() => {
-        import((`../data/${code}.json`)).then(setData);
-    }, [])
+    const data = useStockBasic(code)
 
     if (data === null) {
         return <div>Loading...</div>;
@@ -41,18 +36,11 @@ function ShowStockBasic({code}: { code: string }) {
             </tr>
             <tr>
                 <th>Name</th>
-                <td>{data.meta.name}</td>
+                <td>{data.name}</td>
             </tr>
             <tr>
                 <th>Currency</th>
-                <td>{data.meta.currency}</td>
-            </tr>
-            <tr>
-                <th>Daily Data</th>
-                <td>
-                    <ShowDate value={new Date(data.daily[0].date).getTime()}/>~
-                    <ShowDate value={new Date(data.daily[data.daily.length - 1].date).getTime()}/>
-                </td>
+                <td>{data.currency}</td>
             </tr>
             </tbody>
         </table>
