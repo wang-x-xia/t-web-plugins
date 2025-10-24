@@ -1,3 +1,4 @@
+import {decompressFromUTF16} from "lz-string";
 import {log} from "../shared/log";
 import {Request$, Response$} from "./engine/engine-event";
 
@@ -18,5 +19,11 @@ unsafeWindow.WebSocket = new Proxy(WebSocket, {
 });
 log("ws-hooked", {});
 if (localStorage.getItem("initClientData") != null) {
-    Response$.next(JSON.parse(localStorage.getItem("initClientData")!!));
+    try {
+        const decompressedClientData = decompressFromUTF16(localStorage.getItem("initClientData")!!)
+        Response$.next(JSON.parse(decompressedClientData))
+    } catch (e) {
+        log("parse-initClientData", {"error": e})
+        Response$.next(JSON.parse(localStorage.getItem("initClientData")!!));
+    }
 }
